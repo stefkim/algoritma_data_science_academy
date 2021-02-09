@@ -7,7 +7,7 @@
 - mengaktifkan virtual env \
 `$ conda activate da_newton`
 
-- install kernel \ 
+- install kernel \
 `$ conda install ipykernel -y`
 
 - konfigurasi kernel ke virtual env \
