@@ -1,6 +1,5 @@
 ## Day01
 > pembahasan soal package manager & virtual environment anaconda
-\
 
 - membuat virtual env \
 `$ conda create -n da_newton python=3.8 -y`
