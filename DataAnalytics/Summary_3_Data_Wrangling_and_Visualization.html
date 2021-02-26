@@ -1,5 +1,5 @@
 <!DOCTYPE html><html><head>
-      <title>summary-dwv</title>
+      <title>Summary DWV</title>
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
       
@@ -357,7 +357,96 @@ python -m ipykernel install --user --name=&lt;ENV_NAME&gt;
 </ul>
 </li>
 </ul>
+<h3 class="mume-header" id="reshaping-melt-vs-pivot">Reshaping: Melt vs Pivot</h3>
 
+<ul>
+<li><code>melt()</code>: mengubah DataFrame dari wide to long, parameter:
+<ul>
+<li><code>id_vars</code>: kolom yang menjadi identifier variables (kolom yang dipertahankan)</li>
+<li><code>value_vars</code>: kolom yang menjadi value variables</li>
+<li><code>var_name</code>: memberi nama terhadap kolom variable</li>
+<li><code>value_name</code>: memberi nama terhadap kolom value</li>
+</ul>
+</li>
+<li>(optional) <code>pivot()</code>: mengubah DataFrame dari long to wide, parameter:
+<ul>
+<li><code>index</code>: kolom yang menjadi nama index pada hasil reshaping</li>
+<li><code>columns</code>: kolom yang menjadi nama kolom pada hasil reshaping</li>
+<li><code>values</code>: kolom yang merupakan nilai pada hasil reshaping</li>
+<li>Note: <code>pivot()</code> hanya untuk reshaping (tidak merangkum nilai), sedangkan <code>pivot_table()</code> untuk tabel agregasi (merangkum nilai)</li>
+</ul>
+</li>
+</ul>
+<hr>
+<h2 class="mume-header" id="visualization">Visualization</h2>
+
+<p>Tujuan Visualisasi:</p>
+<ul>
+<li>Exploratory: proses untuk memfamiliarkan diri (berkenalan) dengan data melalui visualisasi, sehingga mendapatkan sebuah insight. Visualisasi yang ditampilkan biasanya sederhana. Analogi: mencari dan mendapatkan batu permata di antara ratusan batu biasa.</li>
+<li>Explanatory: proses untuk menjelaskan atau menyajikan insight yang didapat dari hasil exploratory kepada user/audience. Visualisasi yang ditampilkan biasanya lebih menarik dan meng-highlight insight secara spesifik. Analogi: mempoles batu permata tersebut dan menawarkannya kepada pembeli.</li>
+</ul>
+<h3 class="mume-header" id="types-of-visualization">Types of Visualization</h3>
+
+<ul>
+<li>Line chart: melihat pergerakan nilai dari waktu ke waktu
+<ul>
+<li><code>.plot()</code>, parameter tambahan: <code>xlabel</code>, <code>ylabel</code>, <code>title</code></li>
+</ul>
+</li>
+<li>Bar plot: membandingkan nilai berdasarkan kategori
+<ul>
+<li>Vertikal: <code>.plot(kind=&apos;bar&apos;)</code> atau <code>.plot.bar()</code></li>
+<li>Horizontal: <code>.plot(kind=&apos;barh&apos;)</code> atau <code>.plot.barh()</code></li>
+</ul>
+</li>
+<li>Histogram: melihat persebaran data
+<ul>
+<li><code>.plot(kind=&apos;hist&apos;)</code> atau <code>.plot.hist()</code></li>
+</ul>
+</li>
+<li>Boxplot: melihat persebaran data dalam bentuk five number summary
+<ul>
+<li><code>.plot(kind=&apos;box&apos;)</code> atau <code>.plot.box()</code> atau <code>.boxplot()</code></li>
+<li>Insight:
+<ul>
+<li>Membandingkan nilai median</li>
+<li>Membandingkan lebar kotak untuk mengetahui persebaran</li>
+<li>Outlier/nilai ekstrim</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<hr>
+<h2 class="mume-header" id="group-by">Group By</h2>
+
+<ul>
+<li>
+<p>Istilah group by merupakan gabungan dari proses:</p>
+<ul>
+<li>Split: mengelompokkan baris berdasarkan kolom tertentu</li>
+<li>Apply: menerapkan fungsi untuk masing-masing kelompok</li>
+<li>Combine: mengembalikan hasil dalam bentuk 1 tabel</li>
+</ul>
+</li>
+<li>
+<p>Syntax:</p>
+</li>
+</ul>
+<pre data-role="codeBlock" data-info class="language-"><code>data.groupby([COLUMNS_TO_GROUP])[[VALUES]].AGGFUNC()
+</code></pre><p>atau</p>
+<pre data-role="codeBlock" data-info class="language-"><code>data.groupby([COLUMNS_TO_GROUP]).AGGFUNC()[[VALUES]]
+</code></pre><ul>
+<li><code>COLUMNS_TO_GROUP</code> mengacu pada kolom yang ingin dikelompokkan, seperti <code>index</code> dan <code>columns</code> pada <code>crosstab</code>/<code>pivot_table</code></li>
+<li><code>VALUES</code> mengacu pada kolom yang ingin di-agregasi, seperti <code>values</code> pada <code>crosstab</code>/<code>pivot_table</code></li>
+<li><code>AGGFUNC</code> mengacu pada fungsi agregat yang ingin diterapkan pada <code>VALUES</code>, seperti <code>aggfunc</code> pada <code>crosstab</code>/<code>pivot_table</code>. Dapat berupa method <code>.agg()</code> untuk menspesifikan fungsi agregat untuk masing-masing kolom, contoh:</li>
+</ul>
+<pre data-role="codeBlock" data-info class="language-"><code>.groupby(&apos;Symbols&apos;).agg({
+    &apos;Close&apos;: &apos;mean&apos;,
+    &apos;High&apos;: &apos;max&apos;,
+    &apos;Low&apos;: &apos;min&apos;
+})
+</code></pre>
       </div>
       
       
