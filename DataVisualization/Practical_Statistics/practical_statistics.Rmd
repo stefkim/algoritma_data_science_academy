@@ -1,0 +1,915 @@
+---
+title: "Inclass PS Day 1"
+author: "David"
+date: "3/17/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Statistik Deskriptif
+
+Statistika Deskriptif digunakan untuk menggambarkan karakteristik dari data. Penggunaanya biasanya disajikan dalam bentuk grafik, tabel, summary. Contoh: bisa digunakan dalam membuat reporting, digunakan dalam exploratory data analysis.
+
+## Ukuran Pemusatan (Measure of Central Tendency)
+
+Ukuran pemusatan data adalah **suatu nilai yang cukup untuk mewakili seluruh nilai pada data**.
+
+- mean
+- median
+- modus
+
+### Mean
+
+Cara paling umum untuk membuat perkiraan nilai tunggal dari data yang banyak adalah dengan merata-ratakannya. 
+
+
+Contoh : 
+Data pengunjung rumah makan siang malam dalam 10 hari terakhir sebagai berikut
+
+```{r}
+pengunjung <- c(1032, 43, 41, 33, 50, 49,39,37,46, 37)
+```
+
+
+```{r}
+mean(pengunjung)
+```
+Apa yang sebenarnya terjadi pada mean?
+- semua data terlibat
+- semua data memiliki bobot yang sama
+
+
+* Nilai mean **sensitif terhadap outlier**
+
+### Median
+
+Median atau nilai tengah diperoleh dengan mengurutkan data terlebih dahulu kemudian mencari nilai tengah dari data.
+
+```{r}
+# median
+median(pengunjung)
+```
+
+```{r}
+sort(pengunjung) # 10 data
+```
+
+- semua data tidak terlibat
+- data yang terlibat hanya data yang berada di tengah saja (1 atau 2 data)
+
+Insight: Pemusatan data pengunjung lebih baik diwakilkan dengan nilai median.
+
+Pilihan lain bila dengan menggunakan **trimmed mean**, yaitu rata-rata dengan terlebih dahulu memotong `x` persen nilai terkecil dan terbesar dari data:
+
+```{r}
+mean(pengunjung, trim = 0.1) # membuang 10% data. 5% kiri 5% kanan. data sudah terurut
+sort(pengunjung)
+```
+
+```{r}
+mean(pengunjung, trim =  0.1) # maks 0.15
+median(pengunjung) 
+```
+
+### Modus/ mode
+
+Modus berguna untuk mencari nilai yang paling sering muncul.
+
+* digunakan untuk data kategorik
+
+```{r}
+most <- function(x){
+  table_x <- table(x)
+  name <- names(sort(table_x, decreasing = T))
+  name[1]
+}
+
+```
+
+Contoh penggunaan:
+
+```{r}
+retail <- read.csv("data_input/workshop.csv")
+head(retail)
+```
+
+
+```{r}
+table(retail$Ship.Mode)
+```
+
+
+mean
+  + melibatkan semua data dan diberi bobot yang sama besar
+  - sensitif dengan outlier
+  
+median
+ - Hanya melibatkan data ditengah saja (1 atau 2 data)
+ + kebal terhadap outlier
+ 
+modus 
+ + digunakan untuk data kategorikal
+ 
+ 
+data yang **menyebar normal** mean = median = modus
+
+
+ 
+## Ukuran Penyebaran (Measure of Spread)
+
+Ukuran penyebaran data mewakili seberapa menyebar atau beragam suatu data
+
+### Variance
+
+Variance menggambarkan seberapa data kita *menyebar dari pusat datanya*.
+
+Formula variance: $$var = \frac{\sum(X_i - \bar{X})^2}{n-1}$$
+Fungsi di R: `var()`
+
+pada data `retail` ambil data yang memiliki `Sub.Category` "Copiers" lalu simpan pada object `copiers`
+```{r}
+# subset data
+copiers <- retail[retail$Sub.Category == "Copiers" ,]
+
+# visualisasi sederhana (nilai profit)
+plot(copiers$Profit)
+abline(h = mean(copiers$Profit), col = "red")
+
+```
+
+
+Kenapa penting untuk melihat persebaran data? 
+
+**Contoh:**
+
+Berikut jumlah nasabah bank yang datang ke cabang A dan B setiap harinya
+
+```{r}
+# data
+cabang_A <- c(400,410,420,400,410,420,400,410,420,400,410,420,400)
+cabang_B <- c(130,430,650,540,460,320,380,550,650,470,330,140,270)
+
+```
+
+
+bandingkan nilai mean kedua cabang
+
+```{r}
+# rata-rata harga
+mean(cabang_A)
+mean(cabang_B)
+```
+
+
+Mari bandingkan dari sisi lain, yaitu tingkat keberagaman data (variance). Daerah manakah yang harganya lebih bervariansi?
+Gunakan fungsi `var()`
+```{r}
+# cari nilai variance
+var(cabang_A)
+var(cabang_B)
+
+
+```
+
+density plot
+- landai = variansi besar
+- lancip = variansi rendah
+
+```{r}
+knitr::include_graphics("image/variance_ex.png")
+```
+
+
+**Contoh:**
+
+Di bawah ini, data mana yang lebih bervariasi?
+
+```{r}
+# data
+luas_rumah <- c(100,100,90,90,90,100,100,90,100,100)
+harga_sewa <- c(1,2,3,6,5,8,9,1,7,4) # dalam juta
+
+```
+
+```{r}
+# cek variance
+var(luas_rumah)
+var(harga_sewa)
+```
+
+Note:
+
+* Semakin besar variance, semakin beragam data
+* *Nilai variance bergantung pada skala data!*
+* Nilai variance: 0 - Inf
+* Nilai tidak bisa diinterpretasikan langsung karena merupakan *nilai kuadrat*, hanya bisa membandingkan variance antar data.
+* Variance yang diharapkan bisa kecil/besar, tergantung kebutuhan bisnis.
+
+
+Note: Bila ada data yang rangenya berbeda bisa distandarisasi dahulu datanya sehingga range antar data sama atau tidak jauh berbeda. Caranya dapat menggunakan min-max normalization / scaling menggunakan `scale()`. Standarisasi data akan lebih detail dibahas di course *machine learning*.
+
+### Standard Deviation
+
+Standard deviation menggambarkan **seberapa jauh simpangan nilai yang dianggap umum, dihitung dari titik pusat (mean) nya.** Kita dapat menentukan apakah suatu nilai dikatakan menyimpang dari rata-rata namun masih dikatakan umum, atau sudah tidak umum. 
+
+Karena dihitung dengan **mengakarkan variance**, satuannya sudah sesuai dengan data asli dan bisa diinterpretasikan.
+
+* Formula standar deviasi: $sd = \sqrt{var}$
+* Fungsi di R: `sd()`
+
+```{r}
+# standar deviasi cabang_A & cabang_B
+
+# data
+cabang_A <- c(400,410,420,400,410,420,400,410,420,400,410,420,400)
+cabang_B <- c(130,430,650,540,460,320,380,550,650,470,330,140,270)
+
+# hitung sd menggunakan fungsi sd()
+sd(cabang_A)
+sd(cabang_B)
+```
+Interpretasi:
+
+* simpangan normal untuk cabang_A adalah +- 8.62 dari rata-ratanya (409.2308)
+* simpangan normal untuk cabang_B adalah +- 169.43 dari rata-ratanya
+
+Apabila suatu hari total nasabah yang datang ke cabang B sebanyak 700 orang, apakah jumlah tersebut masih wajar? 
+
+Untuk menjawab pertanyaan diatas kita perlu mengetahui seberapa menyimpang data dari mean-nya. 
+
+$$z-score = \frac{x - mean}{sd}$$
+
+```{r}
+(700 - mean(cabang_B))/sd(cabang_B)
+```
+-2 sampai 2 sd 
+masih normal
+
+
+Bila suatu hari terdapat 650 pengunjung pada cabang A, apakah hal tersebut masih wajar? kenapa?
+
+```{r}
+(650 - mean(cabang_A))/sd(cabang_A)
+```
+
+### range
+
+cara lain untuk menggambarkan sebaran dari suatu data adalah menggunakan range. range merupakan selisih antara nilai maksimum dengan nilai minimum.
+```{r}
+pengunjung
+median(pengunjung)
+```
+
+
+kekurangan dari range adalah nilai yang dihasilkan *sangat dipengaruhi oleh outlier*, bisa diperhatiakan range dari vector pengunjung berikut
+
+```{r}
+max(pengunjung) - min(pengunjung) 
+```
+
+### IQR 
+
+
+untuk mengatasi sensitifitas range terhadap outlier, terdapat satu ukuran lagi yang dapat digunakan yaitu IQR. IQR merupakan selisih antar 2 buat quantilie. pada umumnya nilai yang digunakan yaitu Q3 (75% data) dikurangi Q1 (25%) dengan tujuan mendapatkan range dari 50% data yang ada di tengah.
+
+
+```{r}
+IQR(pengunjung)
+```
+
+mean & sd / var     : pada prhitungan var dan sd melibatkan nilai mean 
+
+median & range / IQR : digunakan pada *data yang sudah terurut* 
+
+untuk nilai persebaran (var,sd,IQR,range) tidak bisa diinterpretasikan secara langsung. harus ada pembandingnya
+
+
+### Boxplot
+Boxplot merupakan plot yang sangat berguna untuk melihat sebaran dari suatu data.
+
+```{r}
+boxplot(retail$Quantity)
+```
+
+```{r}
+hist(retail$Quantity)
+```
+
+
+```{r}
+range(retail$Quantity)
+```
+
+IQR = Q3 - Q1
+
+```{r}
+quantile(retail$Quantity, 0.75) + 1.5*IQR(retail$Quantity)
+quantile(retail$Quantity) - 1.5*IQR(retail$Quantity)
+```
+
+
+
+Semakin sempit boxnya maka variansi semakin kecil
+
+
+```{r}
+hist(retail$Quantity)
+```
+
+**Knowledge Check**
+
+1. Dibawah ini mana ukuran pemusatan yang digunakan ketika terdapat outlier pada data ?
+
+- [ ] Mean
+- [ ] Median
+- [ ] Modus
+- [ ] range
+
+2. Ukuran persebaran yang digunakan melihat *jarak antar quantile* adalah ?
+- [ ] IQR
+- [ ] Range
+- [ ] Variance
+- [ ] Standard Deviation
+
+
+3. Saya sebagai student di Batch Newton ingin memperoleh score setinggi mungkin. Bagaimana keadaan score kelas yang saya inginkan dari sisi mean dan sd?
+
+  -[ ] mean besar, sd kecil
+  -[ ] mean besar, sd besar
+  -[ ] mean kecil, sd kecil
+  -[ ] mean kecil, sd besar
+
+
+4. Banyaknya data yang terdapat pada kotak suatu *boxplot* Sebanyak?
+-[ ] 25%
+-[ ] 50%
+-[ ] 66%
+-[ ] 75%
+
+sampai 15:28
+
+
+## Variable relationship
+
+pada statistik deskriptif kita dapat melihat hubungan antar 2 buah data dengan menggunakan covariance dan correlation. 
+
+
+### covariance
+
+Covariance menunjukkan bagaimana variansi 2 data (variable yang berbeda) bergerak bersamaan. Bila yang pergerakannya serupa maka covariance positif, bila tidak serupa maka covariance negatif.
+
+
+
+$$Cov(X, Y) = \frac{1}{n-1}\sum\limits^n_{i=1}(X_i - \mu_X)(Y_i - \mu_Y)$$
+
+```{r}
+copiers <- retail[retail$Sub.Category == "Copiers",]
+```
+
+```{r}
+cov(copiers$Profit, copiers$Sales)
+cov(copiers$Profit, copiers$Quantity)
+range(copiers$Quantity)
+```
+
+
+```{r}
+copiers[,c("Profit", "Sales", "Quantity")]
+```
+
+
+bila dilihat dari nilai co-variance profit lebih berhubungan dengan sales daripda dengan quantity
+
+
+### Correlation
+
+$$Cor(X,Y) = \frac{Cov(X,Y)}{\sqrt{Var(X)Var(Y)}}$$
+
+
+```{r}
+cor(copiers$Profit, copiers$Sales)
+```
+
+```{r}
+cor(copiers$Profit, copiers$Sales)
+cor(copiers$Profit, copiers$Quantity)
+```
+
+* Nilai korelasi: -1 sampai 1. Bila korelasi A & B mendekati..
+  + -1 = negatif kuat -> bila A naik, B pasti turun.
+  + 0 = tidak berkorelasi -> bila A naik, kita tidak tahu pasti apakah B akan naik/turun.
+  + 1 = positif kuat -> bila A naik, B pasti naik.
+* Semakin tinggi nilai korelasi, semakin bisa kita memprediksi nilai suatu variable menggunakan nilai variable lainnya.
+
+
+
+```{r}
+plot(copiers$Profit, copiers$Sales)
+```
+
+
+```{r}
+knitr::include_graphics("image/corrr.png")
+```
+
+
+```{r}
+knitr::include_graphics("image/correlation-does-not-imply-causation.png") 
+```
+
+tingkat preceraian di US 
+tingkat konsumsi margarin di US
+97%
+
+```{r}
+library(GGally)
+ggcorr(copiers, label = T)
+```
+
+Ukuran pemusatan
+
+mean   : rata2
+median : nilai tengah
+modus  : nilai sering muncul
+
+Ukuran persebaran
+sd        : ukuran penyimpangan
+var       : seberapa menybarnya data dr nilai mean 
+range     : max-min 
+iqr       : 50% data yang ditengah Q3-Q1 
+
+Hubungan antar Variabel
+cov       : 2 var bergerak bersamaan 
+cor       : seberapa kuat dan positif/negatif hubungan antara 2 variabel numerik 
+-1 sd 1 
+-1 negatif kuat 
+1 positif kuat 
+0 tidak berkorelasi
+
+
+-- End of Day 1--
+-- Day 2--
+
+**Knowledge Check**
+
+1. Jika saya ingin membeli 2 saham, yaitu saham a dan saham b. Bagaimana hubungan antar saham yang harus saya beli? 
+saham A dan saham B
+ -[ ] memiliki korelasi + (hubungan searah)
+ -[ ] memiliki korelasi - (hubungan berlawanan)
+ -[ ] tidak memiliki korelasi 
+
+2. Cari korelasi antara `Sales` dan `Profit` dari setiap transaksi menggunakan fungsi cor(). Berdasarkan hasil korelasi yang didapat, mana pernyataan yang tepat terkait hasil korelasi ?
+
+- [ ] Semakin *bertambah* nilai Sales, Profit yang didapat semakin *turun* (-)
+- [X] Semakin *berkurang* nilai Sales, Profit yang didapat semakin *turun* (+)
+- [ ] Semakin *bertambah* nilai Sales, Profit yang didapat *tetap* (0)
+
+```{r}
+cor(retail$Sales, retail$Profit)
+```
+
+# Statistik Inferensial
+
+Statistik Inferensial merupakan teknik menduga populasi menggunakan data sample yang berbasis pada peluang.
+
+
+## Normal Distribution
+
+```{r}
+cabang_A <- c(400,410,420,400,410,420,400,410,420,400,410,420,400)
+cabang_B <- c(130,430,650,540,460,320,380,550,650,470,330,140,270)
+
+mean(cabang_A)
+mean(cabang_B)
+
+sd(cabang_A)
+sd(cabang_B)
+```
+
+```{r}
+knitr::include_graphics("image/normal-distribution.jpg")
+```
+
+
+Karakteristik:
+
+* kurva berbentuk lonceng; simetris
+* luas area dibawah kurva = 1
+* persebaran data:
+  + 68% data berada di rentang +- 1 standar deviasi dari mean
+  + 95% data berada di rentang +- 2 standar deviasi dari mean
+  + 99.7% data berada di rentang +- 3 standar deviasi dari mean
+* **Standar normal baku** adalah distribusi normal dimana mean = 0 dan standar deviasi = 1. 
+
+Distribusi normal banyak digunakan pada inferensial statistik karena dicetuskannya **Central Limit Theorem**.
+
+> Semakin bertambahnya jumlah sampel yang diambil secara acak (random), maka distribusi sampel akan mengikuti distribusi normal.
+
+
+## Probability Density Function 
+
+mencari peluang pada data yang bersifat kontinu (1.2, 2,5,...)
+
+Tinggi badan orang dewasa di Indonesia berdistribusi normal dengan rata-rata `165` cm dan standar deviasi `10` cm. Berapa peluang orang dewasa di Indonesia memiliki tinggi badan `>180` cm?
+
+* Tahapan:
+  + hitung *Z-score* (ubah data ke standar normal baku = Z-score standarization)
+  + hitung peluang berdasarkan Z-score
+* Z-score: titik data pada distribusi normal baku.
+
+$$Z = \frac{x-\mu}{\sigma}$$
+Ket:
+
+* Z = Z-score
+* x = titik data
+* $\mu$ = mean
+* $\sigma$ = standar deviasi
+
+
+Diketahui:
+* mean = 165
+* stdev = 10
+* titik data = 180 
+
+```{r}
+# hitung Z-score
+Z <- (180-165)/10
+
+# hitung peluang
+pnorm(Z, lower.tail = F)
+```
+*peluang saya ketemu sama orang indonesia yang bertinggi badan lebih dari 180 adalah 6.6%*
+
+Berapa peluang orang dewasa di Indonesia memiliki tinggi badan > 140 cm dan tinggi badan < 150 cm?
+
+```{r}
+z170 <- (170-165)/10
+z180 <- (180-165)/10
+
+p170 <- pnorm(z170, lower.tail = F)
+p180 <- pnorm(z180, lower.tail = F)
+p170 - p180
+```
+
+```{r}
+pnorm(170,mean = 165, sd=10, lower.tail = F) 
+```
+lower.tail = F : area didepan garis
+lower.tail = T : area dibelakang garis (default)
+
+## Convidence Interval
+
+
+hujan
+tidak hujan
+
+P : Hujan
+A : Tidak Hujan
+Hasil Prediksi salah
+
+
+curah hujan : numeric 
+prediksi : 23.3212
+actual   : 23.2432
+
+
+Confidence interval (selang kepercayaan) berguna untuk menduga nilai mean populasi dengan sebuah interval (batas bawah, batas atas). Menebak dengan sebuah interval akan meminimalisir error dibandingkan hanya dengan menebak satu nilai.
+
+```{r}
+knitr::include_graphics("image/ci_f.png")
+```
+
+
+* Formula: 
+
+$$CI= \bar{x} \pm Z_{\frac{\alpha}{2}}*SE$$
+
+
+* Ket: 
+  + $\bar{x}$ = rata-rata sampel
+  + $Z_{\frac{\alpha}{2}}$ = Z-score ketika alpha/2
+  + $\alpha$ = tingkat error yang ditolerasi
+  + tingkat kepercayaan = 1-$\alpha$
+  + SE = standard error
+
+SE mengukur kebaikan sampel dalam mewakilkan populasi. Semakin kecil, maka sampel semakin representatif (baik). 
+
+$$SE = \frac{\sigma}{\sqrt n}$$
+* Ket: 
+  + $\sigma$ = standar deviasi sampel
+  + $n$ = jumlah sampel
+
+* Tahapan:
+  + hitung mean sampel
+  + hitung standar deviasi sampel & SE
+  + tentukan tingkat kepercayaan & $\alpha$
+  + tentukan Z alpha/2
+  + hitung confidence interval
+
+**Contoh:**
+
+Bank XYZ ingin memperkirakan rata-rata durasi pelayan nasabah pada customer service. Bank XYZ memiliki **300 data** durasi pelayan 3 bulan terakhir dengan rata-rata durasi **500** detik dan standar deviasi **100** detik.
+
+
+Berapakah confidence interval untuk rata-rata durasi pelayanan? Gunakan tingkat kepercayaan 95%.
+
+Diketahui: 
+mean = 500 detik
+stdev = 100 detik
+jumlah data (n) = 300
+
+1. Hitung nilai SE
+```{r}
+SE <- 100/sqrt(300)
+```
+
+2. Tentukan tingkat kepercayaan dan alpha
+
+```{r}
+# tingkat kepercayaan 95%; error = 5%
+# tingkat kepercayaan 100%; error = 0%
+# tingkat kepercayaan 0%; error = 100%
+alpha <- 0.5 # error
+```
+tingkat kepercayaan 95%
+5% error 
+0.05
+
+2.5%
+500
+2.5%
+
+3. Hitung Z alpha/2
+
+```{r}
+# alpha/2 karena ada error dibagi 2 untuk data ekstrim atas dan bawah.
+# alpha/2 = 0.025
+Z <- qnorm(alpha/2)
+
+```
+
+pnorm() z -> probability
+qnorm() probability -> z
+
+4. Mendapatkan nilai CI
+
+```{r}
+500 + (Z*SE)
+500 - (Z*SE)
+```
+Jawaban: 
+
+dengan selang kepercayaan 95% durasi pelayanan nasabah pada customer service berkisar dari 488.68  - 511.31 detik
+
+
+Note: 
+
+* Semakin tinggi tingkat kepercayaan, CI semakin lebar, dan sebaliknya. Hal ini karena bila kita ingin semakin percaya pada rentang kisaran data kita, pasti rentangnya harus semakin lebar.
+
+^ bayangkan bila kita ingin percaya 100% pada rentang kita, maka rentangnya pasti menjadi -Inf s.d. +Inf
+
+1. Tujuan CI
+2. konsekuensi mengaikkan CI atau menurunkan CI
+semakin besar CI maka range nilainya akan semakin besar
+semakin kecil CI maka range nilainya akan semakin kecil
+3. bisanya CI yang digunakan yaitu 95% atau 90%
+
+
+**Dive Deeper**
+
+1. Data pendapatan karyawan di suatu daerah berdistribusi normal dengan rata-rata Rp 8.500.000 dan standar deviasi Rp 2.200.000. Berapa peluang pegawai yang bekerja pada daerah tersebut yang memiliki penghasilan *lebih dari Rp 13.700.000*?
+
+1. Diketahui
+mean : 8500000 
+sd   : 2200000
+x : 13700000
+
+2. Hitung z-score
+```{r}
+(13700000 - 8500000)/2200000
+```
+
+3. Cari peluang menggunakan dengan fungsi pnorm()
+
+```{r}
+# code here
+pnorm(2.363636, lower.tail = F)
+
+```
+0.9%
+
+## Uji Hipotesis
+
+```{r}
+knitr::include_graphics("image/mask.png")
+```
+
+Uji hipotesis bertujuan untuk menguji **dugaan**. Uji hipotesis sering disebut juga sebagai **uji signifikansi** yang digunakan untuk menguji apakah suatu treatment memberikan perubahan/pengaruh signifikan terhadap suatu kondisi.
+
+Istilah-istilah:
+
+* Hipotesis: dugaan sementara yang harus diuji
+  + $H_0$ / null hypothesis: 
+    - kondisi standar
+    - memiliki unsur kesamaan (=, >=, <=)
+  + $H_1$ / alternate hypothesis: 
+    - umumnya keadaan yang kita harapkan
+    - kontradiktif dengan $H_0$
+
+Contoh: 
+
+* $H_0$:
+  - Pemakaian masker tidak memberikan pengaruh pada laju penyebaran virus corona (=) 
+  - Penambahan teknisi tidak memberikan perbedaan durasi servis laptop (>=)
+  - Penerapan promo tidak memberikan perbedaan jumlah pembelian produk(<=)
+* $H_1$:
+  - Pemakaian masker memberikan pengaruh pada laju penyebaran virus corona (!=) 
+  - Penambahan teknisi menurunkan durasi servis laptop (<)
+  - Penerapan promo meningkatkan jumlah pembelian (>)
+  
+* $\alpha$:
+  + tingkat signifikansi
+  + umumnya 0.05
+* $1-\alpha$: tingkat kepercayaan
+* $p-value$:
+  + akan dibandingkan dengan alpha untuk untuk mengambil keputusan
+  + peluang data sampel berada pada bagian sangat ekstrim/berbeda signifikan dengan keadaan normal.
+  
+Pengambilan keputusan:
+
+* Jika $p-value$ < $\alpha$, maka tolak $H_0$
+* Jika $p-value$ > $\alpha$, maka gagal tolak $H_0$
+
+**Contoh:**
+
+
+### Z-test
+
+Uji hipotesis yang menggunakan Z-test bila:
+
+* standar deviasi populasi diketahui
+* jumlah sampel banyak (n > 30)
+
+**Contoh Kasus**
+
+Lozy merupakan sebuah bisnis online yang bergerak di bidang fashion. Bila diketahui rata-rata likes dari suatu post di platform mereka sebesar **14000** likes dengan standar deviasi **5000** likes.
+
+Demi meningkatkan likes dari tiap post, Lozy memutuskan untuk menggunakan influencer sebagai model pemasaran produk. Setelah menggunakan influencer, diambil **50** postingan acak yang ternyata memiliki rata-rata likes **17500**.
+
+Sebagai tim marketing, analisis apakah influencer tersebut meningkatkan customer engagement (dari segi rata-rata likes) secara signifikan, atau tidak? Gunakan tingkat kepercayaan **95%**.
+
+Jawab:
+
+**a. Tentukan Hipotesis**
+
+* $H_0$: mean likes = 14000 (Influencer tidak memberikan perbedaan jumlah likes)
+* $H_1$: mean likes > 14000 (Influencer meningkatkan jumlah likes)
+
+**b. Hitung Z-hitung**
+
+Diketahui:
+
+* mean populasi = 14000
+* stdev populasi = 5000 
+* mean sampel = 17500
+
+$$Z = \frac{x-\mu}{\sigma}$$
+```{r}
+z <- (17500 - 14000)/5000
+z
+```
+
+```{r}
+knitr::include_graphics("image/normal-distribution.jpg")
+```
+
+
+
+**c. Hitung p-value**
+```{r}
+p_val <- pnorm(z,lower.tail = F)
+p_val
+```
+p- value :  
+alpha    :
+
+
+**d. Bandingkan p-value dengan alpha**
+
+* Jika $p-value$ < $\alpha$, maka tolak $H_0$
+* Jika $p-value$ > $\alpha$, maka gagal tolak $H_0$
+
+```{r}
+p_val > 0.05
+
+```
+Gagal tolak H0
+
+*notes:*
+
+> Gagal Tolak H0  !=    Terima H0
+> Tolak H0        !=    Terima H1
+
+**e. kesimpulan**
+Dengan menggunakan tingkat kepercayaan 95% dapat disimpulkan bahwa peran influencer *tidak* meningkatkan rata-rata likes post dari platform Lozy secara signifikan.
+
+### T-test
+
+Uji hipotesis yang menggunakan T-test bila:
+
+* standar deviasi populasi tidak diketahui
+* jumlah sampel sedikit (n <= 30)
+
+Bentuk T-distribution mirip dengan normal distribution, hanya saja lebih landai ketika jumlah sampel sedikit:
+
+```{r, out.width = "100%", echo = FALSE, fig.align = "center"}
+knitr::include_graphics("image/t-distribution.jpg")
+```
+
+**Contoh:**
+
+Quicker merupakan startup yang bertugas untuk membantu para startup lain mendapatkan dana hibah dari pemerintah. Umumnya, lama proses penyerahan berkas hingga dana dicairkan adalah **215 hari**. 
+
+Dikumpulkan data durasi proses pencairan dana dari **10** perusahaan startup yang menggunakan jasa Quicker sebagai berikut: 
+
+```{r}
+duration <- c(201, 200, 215, 212, 246, 220, 205, 195, 190, 200)
+```
+
+Apakah Quicker bisa secara signifikan mempercepat durasi pencairan dana hibah Gunakan tingkat kepercayaan 95%.
+
+Jawab:
+
+**a. Tentukan Hipotesis**
+
+* $H_0$: mean durasi pencairan dana >= 215 hari (Quicker tidak memberikan efek pada durasi pencairan dana)
+* $H_1$: mean durasi pencairan dana < 215 hari (Quicker mempercepat durasi pencairan dana)
+
+**b. Hitung P-value dengan `t.test()`**
+
+Untuk t.test R sudah memiliki fungsi built-in tersendiri:
+
+```{r}
+# t.test(data_sampel, mu = mean, alternative = dugaan_mean_sampel_di_H1)
+temp <- t.test(duration, mu = 215, alternative = "less")
+temp$p.value
+
+```
+
+**c. Bandingkan P-value dengan alpha**
+
+alpha = 0.05
+p-value > alpha, maka gagal tolak H0
+
+0.1134 > 0.05
+
+**d. Kesimpulan**
+
+Dengan menggunakan tingkat kepercayaan 95% dapat disimpulkan bahwa Quicker tidak mempercepat durasi pencairan dana hibah pemerintah secara signifikan.
+
+
+**Dive Deeper**
+
+1. Rata- rata orang yang terdampak penyakit corona setiap harinya di suatu daerah sebesar **1500** dengan standar deviasi **120**. Pemerintah setempat mewajibkan untuk seluruh warga untuk menggunakan masker demi mengurangi orang yang terkena virus ini. 
+
+setelah 2 bulan (60 hari) kebijakan diterapkan rata rata orang yang terkena corona menjadi **1200**. Sebagai seorang data scientist bantu pemerintah setempat untuk menganalisis apakah penggunaan masker tersebut menurunkan orang yang terkena corona (dari segi rata-rata) secara signifikan, atau tidak? Gunakan tingkat kepercayaan **95%**.
+
+Berikan kesimpulan berdasarkan Uji Hipotesis.
+
+1. tentukan H0 dan H1
+  
+  H0 :
+  H1 :
+
+2. Hitung Z-score
+  
+  Mean populasi =  
+  Std =  
+  Mean sampel =  
+  CI = 
+
+```{r} 
+
+```
+
+3. Hitung P-value
+```{r}
+
+```
+
+
+4. bandingkan P-value dengan alpha
+
+```{r}
+
+```
+
+
+5. Ambil kesimpulan
+
+* Jika $p-value$ < $\alpha$, maka tolak $H_0$
+* Jika $p-value$ > $\alpha$, maka gagal tolak $H_0$
+

@@ -1,0 +1,116 @@
+---
+title: "Soal Latihan"
+author: "David"
+date: "3/17/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+# Import Data
+```{r}
+retail <- read.csv("data_input/retail.csv")
+head(retail)
+```
+
+
+# Data Cleansing
+
+```{r}
+
+retail$Ship.Date <- as.Date(retail$Ship.Date, format = "%m/%d/%y")
+retail$Order.Date <- as.Date(retail$Order.Date, "%m/%d/%y")
+
+retail$Category <-as.factor(retail$Category) 
+retail$Ship.Mode <- as.factor(retail$Ship.Mode)
+retail$Segment <- as.factor(retail$Segment)
+retail$Sub.Category <- as.factor(retail$Sub.Category)
+
+summary(retail)
+
+```
+
+
+
+# Exploratory Data Analysis (EDA)
+
+1. Category apa yang memiliki jumlah `Sales` terendah? 
+
+```{r}
+#code here
+
+
+```
+
+2. Segment apa yang *paling sering* membeli produk dengan Kategori **Office Supplies** ?
+
+```{r}
+#code here
+
+
+```
+
+3. Berapa banyak total quantity yang dipesan untuk setiap segment dan category? Serta kombinasi segment dan category apa yang paling tinggi?
+```{r}
+#code here
+
+
+```
+
+
+4. Berapa nilai median dari quantity untuk setiap Ship.Mode dan Segment?
+```{r}
+#code here
+
+
+```
+
+5. Berapa banyak total quantity yang sudah terjual pada Sub.Category **Copiers**?
+```{r}
+#code here
+
+
+```
+
+6. Kategori apa yang menghasilkan Profit paling tinggi?
+```{r}
+#code here
+
+
+```
+
+
+7. Transaksi dengan order id apa yang mennghasilkan kerugian paling besar?
+```{r}
+#code here
+
+
+```
+
+8. berapa rata - rata waktu yang dibutuhkan dari proses order hingga pengiriman berdasarkan jenis pengirimannya?
+
+**Tips**
+buat kolom baru dari hasil pengurangan Ship.Date dengan Order.Date
+
+```{r}
+# code here
+retail$time <- retail$Ship.Date - retail$Order.Date
+
+
+```
+
+9. Copiers, Chairs, Appliances merupkan sub kategori dengan rata rata profit tertinggi disetiap kategorinya.
+
+Untuk setiap sub kategori tersebut *segment* apa yang *paling sering* membeli produk tersebut? 
+
+
+**Tips**
+Gunakan %in%
+```{r}
+# code here
+cat9 <- c("Copiers", "Chairs", "Appliances")
+
+```

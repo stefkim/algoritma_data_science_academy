@@ -1,0 +1,172 @@
+---
+title: "Regression model: Car Price Study Case"
+author: "Team Algoritma"
+date: "`r format(Sys.Date(), '%B %e, %Y')`"
+output: 
+  html_document:
+    theme: united
+    higlight: zenburn
+    toc: true
+    toc_float:
+      collapsed: false
+    number_sections: true
+    df_print: paged
+---
+
+<style>
+body {
+text-align: justify}
+</style>
+
+# Libraries and Setup
+
+```{r, setup, echo=FALSE}
+# clear-up the environment
+rm(list = ls())
+
+# chunk options
+knitr::opts_chunk$set(
+  message = FALSE,
+  warning = FALSE,
+  fig.align = "center",
+  comment = "#>"
+)
+
+# scientific notation
+options(scipen = 9999)
+```
+
+```{r message=FALSE, warning=FALSE}
+library(dplyr)
+library(lubridate)
+```
+
+# Study Case
+
+Data yang digunakan mengenai penjualan mobil. Misalnya kita diminta untuk membuat model prediksi yang mana mampu memprediksi harga mobil `Selling_Price` berdasarkan beberapa faktor yang mempengaruhi harga mobil tersebut.
+
+1. Silahkan import terlebih dahulu data `car.csv` 
+```{r}
+train <- read.csv("data_input/car.csv", stringsAsFactors = T)
+train
+```
+
+Deskripsi variabel: 
+
+Data Description:
+
+- `Car_Name`: Nama/model dari mobil
+- `Year`: Tahun produksi
+- `Selling_Price`: Harga jual
+- `Present_Price`: Harga beli saat ini
+- `Kms_Driven`: Jumlah kilometer yang sudah ditempuh
+- `Fuel_Type`: Jenis bahan bakar
+- `Seller_Type`: Jenis penjual
+- `Transmission`: Jenis transmisi
+- `Owner`: Status sebagai pemilik (1 = yes, 0 = no)
+
+
+2. Lakukanlah Exploratory Data Analysis sebelum membuat pemodelan
+
+a. Periksalah struktur data `car`
+```{r}
+str(train)
+```
+
+b. Ubahlah tipe data yang belum sesuai
+```{r}
+train <- train %>% 
+  mutate(Car_Name = as.character(Car_Name))
+
+```
+
+c. Periksalah apakah terdapat missing value pada dataset
+```{r}
+anyNA(train)
+```
+
+d. Sebelum melakukan analisis regresi, periksalah korelasi antara variabel **target** yaitu `Selling_Price` dan **prediktor** 
+
+```{r}
+library(GGally)
+ggcorr(train, label = T, label_size = 3.5)
+```
+
+Berdasarkan output korelasi diatas, variabel prediktor apakah yang memiliki korelasi terkecil?  
+
+> Kms_Driven tidak memiliki korelasi terhadap Selling Price. 
+
+Asumsi awal apa yang bisa Anda berikan terkait korelasi tersebut? 
+
+> bisa saja beberapa kolom tersebut/variabel yang kurang berkorelasi atau bahkan berkorelasi lemah tersebut memiliki pengaruh dalam menentukan harga jual mobil
+
+3. Buatlah sebuah model 
+
+a. Menggunakan regression dengan semua prediktor terhadap `Selling_Price`
+
+```{r}
+model_all <- lm(formula = Selling_Price~., data = train)
+```
+
+b. Menggunakan variabel prediktor berdasarkan business wise dan nilai korelasi yang kuat
+```{r}
+model_price <- lm(formula = Selling_Price~Year+Present_Price+Kms_Driven+Fuel_Type+Transmission, data = train)
+```
+
+4. Periksalah summary dari model yang telah Anda buat (pilih salah satu model)
+```{r}
+summary(model_price)
+```
+
+Berikanlah interpretasi terhadap output summary di atas:
+
+* Setiap kenaikan tahun pembuatan mobil akan meningkatkan harga jual mobil sebesar 0.434
+* Setiap kenaikan 1 Km pada mobil akan menurunkan harga jual mobil sebesar -0.000003765 
+* Mobil yang memiliki jenis transmisi manual akan memiliki harga jual lebih rendah sebesar -0.2677 dibandingkan yang memiliki transmission matic
+
+Berdasarkan kedua model diperoleh, apabila dilihat dari nilai adjusted R-Squared-nya, manakah model yang lebih baik?
+```{r}
+summary(model_all)$adj.r.squared
+summary(model_price)$adj.r.squared
+```
+> Model yang lebih baik adalah model_all, namun untuk analisis kita akan gunakan model_price untuk memprediksi data test
+
+5. Berdasarkan model linear regression yang sudah dibuat, prediksilah data `train` dan data test yang ada menggunakan dua model yang telah dibuat
+
+a. Import data `car_test.csv` dan lakukan data wrangling seperti yang dilakukan pada data train
+
+```{r}
+test <- read.csv("data_input/car_test.csv", stringsAsFactors = T)
+test
+```
+b. Prediksi data test menggunakan model yang telah dibuat
+
+```{r}
+predict_price <- predict(object = model_price, test)
+```
+
+6. Periksa error (MAPE) terhadap data train dan test
+
+```{r}
+# cek eror data train
+library(MLmetrics)
+MAPE(model_price$fitted.values, train$Selling_Price)*100
+```
+
+
+b. Periksalah errornya
+```{r}
+# eror pada data test
+library(MLmetrics)
+MAPE(predict_price, test$Selling_Price)*100
+```
+
+# Kesimpulan
+
+* Berdasarkan model yang telah dibuat, `model_price` belum mampu memprediksi `Selling_Price` dengan baik dikarenakan eror yang diperoleh pada data train berbeda jauh dengan data test.
+* `model_price` memiliki performa yang masih kurang baik dalam memprediksi dikarenakan memiliki eror sebesar 138% (pada data test).
+* Untuk melakukan perbaikan model hal yang bisa dilakukan adalah:
+  + Melakukan data wrangling dimana: membuat kategori tahun pembuatan, membuat kategori berdasarkan variabel Kms_Driven
+  + Menggunakan prediktor yang lain dan dibuat model kembali
+  + Menambahkan data (jika ada) untuk dibuat model ulang
+  + Mengganti menggunakan model regresi lain seperti model polinomial regression atau random forest regression

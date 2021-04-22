@@ -1,0 +1,121 @@
+---
+title: "Dashboard Demografi Pekerja"
+output: 
+  flexdashboard::flex_dashboard:
+    orientation: rows
+    vertical_layout: fill
+---
+
+```{r setup, include=FALSE}
+options(scipen = 123)
+library(flexdashboard)
+library(tidyverse)
+library(ggthemes)
+library(plotly)
+library(scales)
+library(glue)
+```
+
+
+
+```{r}
+workers <- read.csv("data_input/jobs_gender.csv")
+workers_clean <- workers %>% 
+  mutate_if(is.character, as.factor) %>% 
+  drop_na(total_earnings_male, total_earnings_female) %>% 
+  select(-wage_percent_of_male)
+  
+```
+
+
+Rows {data-length=500}
+-----------------------------------------------------------------------
+
+### Pendapatan Pegawai
+
+```{r}
+worker_df_density <- workers_clean %>% 
+  filter(year == 2016) %>% 
+  select(occupation, total_earnings_male, total_earnings_female) %>%
+  pivot_longer(cols = -occupation, 
+               names_to = "gender",
+               names_prefix = "total_earnings_", 
+               values_to = "total_earnings") %>% 
+  mutate(total_earnings = as.numeric(total_earnings))
+
+
+plot_density <- worker_df_density %>% 
+  ggplot(aes(x = total_earnings, fill = gender)) +
+  geom_density(alpha = 0.95 ) +
+  scale_fill_brewer(palette = "Set1") +
+  labs(title = "Distribusi Pendapatan Pegawai Berdasarkan Gender Tahun 2016", 
+       x = NULL, 
+       y = NULL, 
+       fill = NULL) +
+  scale_x_continuous(labels = dollar_format()) +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5), 
+        panel.grid.minor = element_blank(),
+        panel.grid.major.x = element_blank())
+
+ggplotly(plot_density) %>% 
+  config(displayModeBar = F)
+
+
+```
+
+Row {data-width=350}
+-----------------------------------------------------------------------
+
+### Kesenjangan Pendapatan Pegawai
+
+```{r}
+worker_agg1 <- workers_clean %>% 
+  filter(year == 2016) %>% 
+  mutate(gap_earnings = total_earnings_male - total_earnings_female) %>% 
+  group_by(major_category) %>% 
+  summarise(mean_gap_eranings = mean(gap_earnings)) %>% 
+  arrange(desc(mean_gap_eranings)) %>% 
+  ungroup() 
+
+
+plot1 <- ggplot(data = worker_agg1, mapping = aes(x = mean_gap_eranings, 
+                                         y = reorder(major_category, mean_gap_eranings))) +
+  geom_col(fill = "dodgerblue4", aes(text = glue("Kesenjangan Pendapatan :${round(mean_gap_eranings,2) }"))) +
+  labs(title = "Rata Rata Kesenjangan Pendapatan Pria dan Wanita",
+       x = NULL,
+       y = NULL) +
+  theme_minimal() +
+  theme(plot.title = element_text(size = 10)) +
+  scale_x_continuous(labels = dollar_format())
+ggplotly(plot1, tooltip = "text") %>% 
+  config(displayModeBar = F)
+
+```
+
+### Pekerja Wanita
+
+
+```{r}
+workers_female_data <- workers_clean %>% 
+  filter(year ==2016, workers_female > workers_male) %>% 
+  group_by(major_category) %>% 
+  summarise(freq=n()) %>%
+  arrange(-freq) %>% 
+  ungroup()
+
+
+plot2 <- ggplot(workers_female_data, aes(y=reorder(major_category, freq),
+                                         x=freq, 
+                                         text = glue("Jumlah Pekerjaan: {freq}"))) +
+  geom_segment(aes(yend = major_category, xend = 0)) +
+  geom_point(col = "firebrick4", size = 2.5) +
+  labs(x = NULL, 
+       y = NULL,
+       title = "Pekerjaan yang Didominasi Wanita") + 
+  theme_minimal() +
+  theme(plot.title = element_text(size = 10))
+ggplotly(plot2, tooltip = "text")%>% 
+  config(displayModeBar = F)
+```
+

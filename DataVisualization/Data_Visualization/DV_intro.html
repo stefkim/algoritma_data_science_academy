@@ -1,0 +1,933 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="generator" content="pandoc">
+  <meta name="author" content="Team Algoritma" />
+  <title>Data Visualization</title>
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, minimal-ui">
+  <link rel="stylesheet" href="DV_intro_files/reveal.js-3.3.0.1/css/reveal.css"/>
+
+
+<style type="text/css">
+code.sourceCode > span { display: inline-block; line-height: 1.25; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode { white-space: pre; position: relative; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+code.sourceCode { white-space: pre-wrap; }
+code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+    color: #aaaaaa;
+  }
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } /* Alert */
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+code span.at { color: #7d9029; } /* Attribute */
+code span.bn { color: #40a070; } /* BaseN */
+code span.bu { } /* BuiltIn */
+code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+code span.ch { color: #4070a0; } /* Char */
+code span.cn { color: #880000; } /* Constant */
+code span.co { color: #60a0b0; font-style: italic; } /* Comment */
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+code span.do { color: #ba2121; font-style: italic; } /* Documentation */
+code span.dt { color: #902000; } /* DataType */
+code span.dv { color: #40a070; } /* DecVal */
+code span.er { color: #ff0000; font-weight: bold; } /* Error */
+code span.ex { } /* Extension */
+code span.fl { color: #40a070; } /* Float */
+code span.fu { color: #06287e; } /* Function */
+code span.im { } /* Import */
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+code span.kw { color: #007020; font-weight: bold; } /* Keyword */
+code span.op { color: #666666; } /* Operator */
+code span.ot { color: #007020; } /* Other */
+code span.pp { color: #bc7a00; } /* Preprocessor */
+code span.sc { color: #4070a0; } /* SpecialChar */
+code span.ss { color: #bb6688; } /* SpecialString */
+code span.st { color: #4070a0; } /* String */
+code span.va { color: #19177c; } /* Variable */
+code span.vs { color: #4070a0; } /* VerbatimString */
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+</style>
+
+<link rel="stylesheet" href="DV_intro_files/reveal.js-3.3.0.1/css/theme/simple.css" id="theme">
+
+
+  <!-- some tweaks to reveal css -->
+  <style type="text/css">
+    .reveal h1 { font-size: 2.0em; }
+    .reveal h2 { font-size: 1.5em;  }
+    .reveal h3 { font-size: 1.25em;	}
+    .reveal h4 { font-size: 1em;	}
+
+    .reveal .slides>section,
+    .reveal .slides>section>section {
+      padding: 0px 0px;
+    }
+
+
+
+    .reveal table {
+      border-width: 1px;
+      border-spacing: 2px;
+      border-style: dotted;
+      border-color: gray;
+      border-collapse: collapse;
+      font-size: 0.7em;
+    }
+
+    .reveal table th {
+      border-width: 1px;
+      padding-left: 10px;
+      padding-right: 25px;
+      font-weight: bold;
+      border-style: dotted;
+      border-color: gray;
+    }
+
+    .reveal table td {
+      border-width: 1px;
+      padding-left: 10px;
+      padding-right: 25px;
+      border-style: dotted;
+      border-color: gray;
+    }
+
+    .reveal .slide-menu-button {
+      left: 105px !important;
+    }
+
+  </style>
+
+    <style type="text/css">code{white-space: pre;}</style>
+
+
+<!-- Printing and PDF exports -->
+<script id="paper-css" type="application/dynamic-css">
+
+/* Default Print Stylesheet Template
+   by Rob Glazebrook of CSSnewbie.com
+   Last Updated: June 4, 2008
+
+   Feel free (nay, compelled) to edit, append, and
+   manipulate this file as you see fit. */
+
+
+@media print {
+
+	/* SECTION 1: Set default width, margin, float, and
+	   background. This prevents elements from extending
+	   beyond the edge of the printed page, and prevents
+	   unnecessary background images from printing */
+	html {
+		background: #fff;
+		width: auto;
+		height: auto;
+		overflow: visible;
+	}
+	body {
+		background: #fff;
+		font-size: 20pt;
+		width: auto;
+		height: auto;
+		border: 0;
+		margin: 0 5%;
+		padding: 0;
+		overflow: visible;
+		float: none !important;
+	}
+
+	/* SECTION 2: Remove any elements not needed in print.
+	   This would include navigation, ads, sidebars, etc. */
+	.nestedarrow,
+	.controls,
+	.fork-reveal,
+	.share-reveal,
+	.state-background,
+	.reveal .progress,
+	.reveal .backgrounds {
+		display: none !important;
+	}
+
+	/* SECTION 3: Set body font face, size, and color.
+	   Consider using a serif font for readability. */
+	body, p, td, li, div {
+		font-size: 20pt!important;
+		font-family: Georgia, "Times New Roman", Times, serif !important;
+		color: #000;
+	}
+
+	/* SECTION 4: Set heading font face, sizes, and color.
+	   Differentiate your headings from your body text.
+	   Perhaps use a large sans-serif for distinction. */
+	h1,h2,h3,h4,h5,h6 {
+		color: #000!important;
+		height: auto;
+		line-height: normal;
+		font-family: Georgia, "Times New Roman", Times, serif !important;
+		text-shadow: 0 0 0 #000 !important;
+		text-align: left;
+		letter-spacing: normal;
+	}
+	/* Need to reduce the size of the fonts for printing */
+	h1 { font-size: 28pt !important;  }
+	h2 { font-size: 24pt !important; }
+	h3 { font-size: 22pt !important; }
+	h4 { font-size: 22pt !important; font-variant: small-caps; }
+	h5 { font-size: 21pt !important; }
+	h6 { font-size: 20pt !important; font-style: italic; }
+
+	/* SECTION 5: Make hyperlinks more usable.
+	   Ensure links are underlined, and consider appending
+	   the URL to the end of the link for usability. */
+	a:link,
+	a:visited {
+		color: #000 !important;
+		font-weight: bold;
+		text-decoration: underline;
+	}
+	/*
+	.reveal a:link:after,
+	.reveal a:visited:after {
+		content: " (" attr(href) ") ";
+		color: #222 !important;
+		font-size: 90%;
+	}
+	*/
+
+
+	/* SECTION 6: more reveal.js specific additions by @skypanther */
+	ul, ol, div, p {
+		visibility: visible;
+		position: static;
+		width: auto;
+		height: auto;
+		display: block;
+		overflow: visible;
+		margin: 0;
+		text-align: left !important;
+	}
+	.reveal pre,
+	.reveal table {
+		margin-left: 0;
+		margin-right: 0;
+	}
+	.reveal pre code {
+		padding: 20px;
+		border: 1px solid #ddd;
+	}
+	.reveal blockquote {
+		margin: 20px 0;
+	}
+	.reveal .slides {
+		position: static !important;
+		width: auto !important;
+		height: auto !important;
+
+		left: 0 !important;
+		top: 0 !important;
+		margin-left: 0 !important;
+		margin-top: 0 !important;
+		padding: 0 !important;
+		zoom: 1 !important;
+
+		overflow: visible !important;
+		display: block !important;
+
+		text-align: left !important;
+		-webkit-perspective: none;
+		   -moz-perspective: none;
+		    -ms-perspective: none;
+		        perspective: none;
+
+		-webkit-perspective-origin: 50% 50%;
+		   -moz-perspective-origin: 50% 50%;
+		    -ms-perspective-origin: 50% 50%;
+		        perspective-origin: 50% 50%;
+	}
+	.reveal .slides section {
+		visibility: visible !important;
+		position: static !important;
+		width: auto !important;
+		height: auto !important;
+		display: block !important;
+		overflow: visible !important;
+
+		left: 0 !important;
+		top: 0 !important;
+		margin-left: 0 !important;
+		margin-top: 0 !important;
+		padding: 60px 20px !important;
+		z-index: auto !important;
+
+		opacity: 1 !important;
+
+		page-break-after: always !important;
+
+		-webkit-transform-style: flat !important;
+		   -moz-transform-style: flat !important;
+		    -ms-transform-style: flat !important;
+		        transform-style: flat !important;
+
+		-webkit-transform: none !important;
+		   -moz-transform: none !important;
+		    -ms-transform: none !important;
+		        transform: none !important;
+
+		-webkit-transition: none !important;
+		   -moz-transition: none !important;
+		    -ms-transition: none !important;
+		        transition: none !important;
+	}
+	.reveal .slides section.stack {
+		padding: 0 !important;
+	}
+	.reveal section:last-of-type {
+		page-break-after: avoid !important;
+	}
+	.reveal section .fragment {
+		opacity: 1 !important;
+		visibility: visible !important;
+
+		-webkit-transform: none !important;
+		   -moz-transform: none !important;
+		    -ms-transform: none !important;
+		        transform: none !important;
+	}
+	.reveal section img {
+		display: block;
+		margin: 15px 0px;
+		background: rgba(255,255,255,1);
+		border: 1px solid #666;
+		box-shadow: none;
+	}
+
+	.reveal section small {
+		font-size: 0.8em;
+	}
+
+}  
+</script>
+
+
+<script id="pdf-css" type="application/dynamic-css">
+    
+/**
+ * This stylesheet is used to print reveal.js
+ * presentations to PDF.
+ *
+ * https://github.com/hakimel/reveal.js#pdf-export
+ */
+
+* {
+	-webkit-print-color-adjust: exact;
+}
+
+body {
+	margin: 0 auto !important;
+	border: 0;
+	padding: 0;
+	float: none !important;
+	overflow: visible;
+}
+
+html {
+	width: 100%;
+	height: 100%;
+	overflow: visible;
+}
+
+/* Remove any elements not needed in print. */
+.nestedarrow,
+.reveal .controls,
+.reveal .progress,
+.reveal .playback,
+.reveal.overview,
+.fork-reveal,
+.share-reveal,
+.state-background {
+	display: none !important;
+}
+
+h1, h2, h3, h4, h5, h6 {
+	text-shadow: 0 0 0 #000 !important;
+}
+
+.reveal pre code {
+	overflow: hidden !important;
+	font-family: Courier, 'Courier New', monospace !important;
+}
+
+ul, ol, div, p {
+	visibility: visible;
+	position: static;
+	width: auto;
+	height: auto;
+	display: block;
+	overflow: visible;
+	margin: auto;
+}
+.reveal {
+	width: auto !important;
+	height: auto !important;
+	overflow: hidden !important;
+}
+.reveal .slides {
+	position: static;
+	width: 100%;
+	height: auto;
+
+	left: auto;
+	top: auto;
+	margin: 0 !important;
+	padding: 0 !important;
+
+	overflow: visible;
+	display: block;
+
+	-webkit-perspective: none;
+	   -moz-perspective: none;
+	    -ms-perspective: none;
+	        perspective: none;
+
+	-webkit-perspective-origin: 50% 50%; /* there isn't a none/auto value but 50-50 is the default */
+	   -moz-perspective-origin: 50% 50%;
+	    -ms-perspective-origin: 50% 50%;
+	        perspective-origin: 50% 50%;
+}
+
+.reveal .slides section {
+	page-break-after: always !important;
+
+	visibility: visible !important;
+	position: relative !important;
+	display: block !important;
+	position: relative !important;
+
+	margin: 0 !important;
+	padding: 0 !important;
+	box-sizing: border-box !important;
+	min-height: 1px;
+
+	opacity: 1 !important;
+
+	-webkit-transform-style: flat !important;
+	   -moz-transform-style: flat !important;
+	    -ms-transform-style: flat !important;
+	        transform-style: flat !important;
+
+	-webkit-transform: none !important;
+	   -moz-transform: none !important;
+	    -ms-transform: none !important;
+	        transform: none !important;
+}
+
+.reveal section.stack {
+	margin: 0 !important;
+	padding: 0 !important;
+	page-break-after: avoid !important;
+	height: auto !important;
+	min-height: auto !important;
+}
+
+.reveal img {
+	box-shadow: none;
+}
+
+.reveal .roll {
+	overflow: visible;
+	line-height: 1em;
+}
+
+/* Slide backgrounds are placed inside of their slide when exporting to PDF */
+.reveal section .slide-background {
+	display: block !important;
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	z-index: -1;
+}
+
+/* All elements should be above the slide-background */
+.reveal section>* {
+	position: relative;
+	z-index: 1;
+}
+
+/* Display slide speaker notes when 'showNotes' is enabled */
+.reveal .speaker-notes-pdf {
+	display: block;
+	width: 100%;
+	max-height: none;
+	left: auto;
+	top: auto;
+	z-index: 100;
+}
+
+/* Display slide numbers when 'slideNumber' is enabled */
+.reveal .slide-number-pdf {
+	display: block;
+	position: absolute;
+	font-size: 14px;
+}
+
+</script>
+
+
+<script>
+var style = document.createElement( 'style' );
+style.type = 'text/css';
+var style_script_id = window.location.search.match( /print-pdf/gi ) ? 'pdf-css' : 'paper-css';
+var style_script = document.getElementById(style_script_id).text;
+style.innerHTML = style_script;
+document.getElementsByTagName('head')[0].appendChild(style);
+</script>
+
+    <link href="DV_intro_files/font-awesome-5.1.0/css/all.css" rel="stylesheet" />
+    <link href="DV_intro_files/font-awesome-5.1.0/css/v4-shims.css" rel="stylesheet" />
+</head>
+<body>
+  <div class="reveal">
+    <div class="slides">
+
+<section>
+    <h1 class="title">Data Visualization</h1>
+    <h2 class="author">Team Algoritma</h2>
+</section>
+
+<section class="slide level2">
+
+<style>
+.reveal section img { background:none; border:none; box-shadow:none; }
+</style>
+</section>
+<section><section id="why-should-we-learn-data-visualization" class="title-slide slide level1"><h1>Why Should We Learn Data Visualization?</h1></section><section id="can-you-get-the-idea-of-this-data" class="slide level2">
+<h2>Can you get the idea of this data?</h2>
+<table>
+<caption>1974 Motor Trend US Car Road Tests</caption>
+<thead>
+<tr class="header">
+<th style="text-align: right;">mpg</th>
+<th style="text-align: right;">cyl</th>
+<th style="text-align: right;">disp</th>
+<th style="text-align: right;">hp</th>
+<th style="text-align: right;">drat</th>
+<th style="text-align: right;">wt</th>
+<th style="text-align: right;">qsec</th>
+<th style="text-align: right;">vs</th>
+<th style="text-align: right;">am</th>
+<th style="text-align: right;">gear</th>
+<th style="text-align: right;">carb</th>
+<th style="text-align: left;">model</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: right;">21.0</td>
+<td style="text-align: right;">6</td>
+<td style="text-align: right;">160</td>
+<td style="text-align: right;">110</td>
+<td style="text-align: right;">3.90</td>
+<td style="text-align: right;">2.620</td>
+<td style="text-align: right;">16.46</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">4</td>
+<td style="text-align: right;">4</td>
+<td style="text-align: left;">Mazda RX4</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">21.0</td>
+<td style="text-align: right;">6</td>
+<td style="text-align: right;">160</td>
+<td style="text-align: right;">110</td>
+<td style="text-align: right;">3.90</td>
+<td style="text-align: right;">2.875</td>
+<td style="text-align: right;">17.02</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">4</td>
+<td style="text-align: right;">4</td>
+<td style="text-align: left;">Mazda RX4 Wag</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">22.8</td>
+<td style="text-align: right;">4</td>
+<td style="text-align: right;">108</td>
+<td style="text-align: right;">93</td>
+<td style="text-align: right;">3.85</td>
+<td style="text-align: right;">2.320</td>
+<td style="text-align: right;">18.61</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">4</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: left;">Datsun 710</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">21.4</td>
+<td style="text-align: right;">6</td>
+<td style="text-align: right;">258</td>
+<td style="text-align: right;">110</td>
+<td style="text-align: right;">3.08</td>
+<td style="text-align: right;">3.215</td>
+<td style="text-align: right;">19.44</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">3</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: left;">Hornet 4 Drive</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">18.7</td>
+<td style="text-align: right;">8</td>
+<td style="text-align: right;">360</td>
+<td style="text-align: right;">175</td>
+<td style="text-align: right;">3.15</td>
+<td style="text-align: right;">3.440</td>
+<td style="text-align: right;">17.02</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">3</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: left;">Hornet Sportabout</td>
+</tr>
+</tbody>
+</table>
+</section><section id="how-about-now" class="slide level2">
+<h2>How about now?</h2>
+<p><img src="DV_intro_files/figure-revealjs/unnamed-chunk-3-1.png" width="80%" style="display: block; margin: auto;" /></p>
+</section><section id="visualization-is-crucial-to-communicate-result" class="slide level2">
+<h2>Visualization is crucial to communicate result</h2>
+<p><img data-src="image/tidy.JPG" style="width:80.0%" /></p>
+<font size="5">
+<div style="text-align: right">
+<em>R for Data Science by Garrett Grolemund, Hadley Wickham</em> </font>
+</div>
+</section><section id="the-goal-of-visualization" class="slide level2">
+<h2>The Goal of Visualization</h2>
+<hr>
+<ul>
+<li><strong>Exploratory</strong> <br> to uncover data<br />
+to <em>analyze</em> data <br> <br></li>
+<li><strong>Explanatory</strong> <br> to communicate data<br />
+to <em>present</em> data</li>
+</ul>
+</section></section>
+<section><section id="data-visualization-in-r" class="title-slide slide level1"><h1>Data Visualization in R</h1></section><section id="the-workflow" class="slide level2">
+<h2><strong>The Workflow</strong></h2>
+<hr>
+<ol type="1">
+<li>Start with Business Question</li>
+<li>Prepare the data</li>
+<li>Visualize your data</li>
+</ol>
+</section><section id="base-statistical-plotting" class="slide level2">
+<h2><strong>Base &amp; Statistical Plotting</strong></h2>
+<hr>
+<p><font size="5"><code>plot()</code> knows how to pick sensible defaults based on the input vector it was given.</font></p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1"></a><span class="kw">plot</span>(iris<span class="op">$</span>Species, iris<span class="op">$</span>Petal.Width)</span></code></pre></div>
+<p><img src="DV_intro_files/figure-revealjs/unnamed-chunk-4-1.png" width="65%" style="display: block; margin: auto;" /></p>
+</section><section class="slide level2">
+
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1"></a><span class="kw">plot</span>(iris<span class="op">$</span>Sepal.Length, iris<span class="op">$</span>Sepal.Width)</span></code></pre></div>
+<p><img src="DV_intro_files/figure-revealjs/unnamed-chunk-5-1.png" width="65%" style="display: block; margin: auto;" /></p>
+</section><section class="slide level2">
+
+<p><font size="5"> Add <code>col</code> to distinct the categorical values, and <code>abline</code> to add straight line in your plot:</font></p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1"></a><span class="kw">plot</span>(iris<span class="op">$</span>Sepal.Length, iris<span class="op">$</span>Sepal.Width,<span class="dt">col =</span> iris<span class="op">$</span>Species,<span class="dt">pch =</span> <span class="dv">19</span>)</span>
+<span id="cb3-2"><a href="#cb3-2"></a><span class="kw">abline</span>(<span class="kw">lm</span>(iris<span class="op">$</span>Sepal.Width<span class="op">~</span>iris<span class="op">$</span>Sepal.Length), <span class="dt">col =</span> <span class="st">&quot;grey&quot;</span>, <span class="dt">lty =</span> <span class="dv">2</span>, <span class="dt">lwd =</span> <span class="dv">2</span>)</span>
+<span id="cb3-3"><a href="#cb3-3"></a><span class="kw">legend</span>(<span class="st">&quot;topright&quot;</span>,<span class="dt">legend =</span> <span class="kw">unique</span>(iris<span class="op">$</span>Species),<span class="dt">fill =</span> <span class="dv">1</span><span class="op">:</span><span class="dv">3</span>)</span></code></pre></div>
+<p><img src="DV_intro_files/figure-revealjs/unnamed-chunk-6-1.png" width="60%" style="display: block; margin: auto;" /></p>
+</section><section class="slide level2">
+
+<p><font size="5"> Use <code>hist</code> to create histogram:</font></p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1"></a><span class="kw">hist</span>(iris<span class="op">$</span>Sepal.Length, <span class="dt">breaks =</span> <span class="dv">20</span>, <span class="dt">ylim =</span> <span class="kw">c</span>(<span class="dv">0</span>,<span class="dv">20</span>), <span class="dt">col =</span> <span class="st">&quot;lightblue&quot;</span>)</span>
+<span id="cb4-2"><a href="#cb4-2"></a><span class="kw">abline</span>(<span class="dt">v =</span> <span class="kw">mean</span>(iris<span class="op">$</span>Sepal.Length), <span class="dt">col =</span> <span class="st">&quot;red&quot;</span>, <span class="dt">lty=</span><span class="dv">2</span>, <span class="dt">lwd=</span><span class="dv">3</span>)</span></code></pre></div>
+<p><img src="DV_intro_files/figure-revealjs/unnamed-chunk-7-1.png" width="60%" style="display: block; margin: auto;" /></p>
+</section><section id="rs-base-plot-graphical-parameters-reference" class="slide level2">
+<h2>R’s base plot graphical parameters reference:</h2>
+<p><img data-src="image/base.png" /></p>
+<p><a href="https://www.statmethods.net/advgraphs/parameters.html" class="uri">https://www.statmethods.net/advgraphs/parameters.html</a></p>
+</section><section id="grammar-of-graphics-in-r-ggplot2" class="slide level2">
+<h2><strong>Grammar of Graphics in R: <code>ggplot2</code></strong></h2>
+<hr>
+<img data-src="image/ggplot.gif" style="width:30.0%" />
+<div style="text-align: left">
+<font size="5"> With <code>ggplot2</code>, plots may be created using <code>qplot()</code> where arguments and defaults are handled similarly to the base plotting system, or through <code>ggplot()</code> where user can add or alter plot components layer-by-layer with a high level of modularity:
+</div>
+<p></font></p>
+</section><section id="create-the-canvas" class="slide level2">
+<h2>1. Create the Canvas</h2>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1"></a><span class="kw">ggplot</span>(iris, <span class="kw">aes</span>(<span class="dt">x =</span> Species, <span class="dt">y =</span> Sepal.Length))</span></code></pre></div>
+<p><img src="DV_intro_files/figure-revealjs/unnamed-chunk-8-1.png" width="70%" style="display: block; margin: auto;" /></p>
+</section><section id="add-a-geometrical-element" class="slide level2">
+<h2>2. Add a geometrical element</h2>
+<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1"></a><span class="kw">ggplot</span>(iris,<span class="kw">aes</span>(<span class="dt">x =</span> Species, <span class="dt">y =</span> Sepal.Length))<span class="op">+</span></span>
+<span id="cb6-2"><a href="#cb6-2"></a><span class="st">  </span><span class="kw">geom_boxplot</span>()</span></code></pre></div>
+<p><img src="DV_intro_files/figure-revealjs/unnamed-chunk-9-1.png" width="70%" style="display: block; margin: auto;" /></p>
+</section><section id="add-another-geom-element" class="slide level2">
+<h2>3. Add another geom element</h2>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1"></a><span class="kw">ggplot</span>(iris,<span class="kw">aes</span>(<span class="dt">x =</span> Species, <span class="dt">y =</span> Sepal.Length))<span class="op">+</span></span>
+<span id="cb7-2"><a href="#cb7-2"></a><span class="st">  </span><span class="kw">geom_boxplot</span>()<span class="op">+</span></span>
+<span id="cb7-3"><a href="#cb7-3"></a><span class="st">  </span><span class="kw">geom_jitter</span>(<span class="kw">aes</span>(<span class="dt">color =</span> Sepal.Width))</span></code></pre></div>
+<p><img src="DV_intro_files/figure-revealjs/unnamed-chunk-10-1.png" width="60%" style="display: block; margin: auto;" /></p>
+</section><section id="add-chart-furniture" class="slide level2">
+<h2>4. Add chart furniture</h2>
+<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1"></a><span class="kw">ggplot</span>(iris,<span class="kw">aes</span>(<span class="dt">x =</span> Species, <span class="dt">y =</span> Sepal.Length))<span class="op">+</span></span>
+<span id="cb8-2"><a href="#cb8-2"></a><span class="st">  </span><span class="kw">geom_boxplot</span>()<span class="op">+</span></span>
+<span id="cb8-3"><a href="#cb8-3"></a><span class="st">  </span><span class="kw">geom_jitter</span>(<span class="kw">aes</span>(<span class="dt">color =</span> Sepal.Width))<span class="op">+</span></span>
+<span id="cb8-4"><a href="#cb8-4"></a><span class="st">  </span><span class="kw">labs</span>(<span class="dt">title =</span> <span class="st">&quot;Iris Sepal Length and Width&quot;</span>,<span class="dt">caption =</span> <span class="st">&quot;Source: Fisher&#39;s or Anderson&#39;s&quot;</span>)<span class="op">+</span></span>
+<span id="cb8-5"><a href="#cb8-5"></a><span class="st">  </span><span class="kw">theme_economist</span>()<span class="op">+</span><span class="st"> </span><span class="kw">scale_fill_economist</span>()</span></code></pre></div>
+<p><img src="DV_intro_files/figure-revealjs/unnamed-chunk-11-1.png" width="50%" style="display: block; margin: auto;" /></p>
+</section></section>
+<section><section id="data-visualization-basic-principles" class="title-slide slide level1"><h1>Data Visualization:<br><strong>Basic Principles</strong></h1></section><section id="which-chart-type-should-i-use" class="slide level2">
+<h2>Which chart type should I use?</h2>
+<hr>
+<p><font size="6"> This is a frequently asked question, and the best answer is:<br />
+<strong>Experiment with different charts, to see which works best to liberate the story in your data.</strong></p>
+<p>Although it is far from comprehensive, and makes some specific chart suggestions that I would not personally endorse, this <em>“chart of charts”</em> provides a useful framework by providing four answers to the question:</p>
+<p><strong>“What would you like to show?”</strong> </font></p>
+</section><section class="slide level2">
+
+<p><img data-src="image/goodchart-1.png" /></p>
+</section><section class="slide level2">
+
+<font size="5">
+<div style="text-align: left">
+<h2 id="using-chart-furniture-minimizing-chart-junk-highlighting-the-story">Using chart furniture, minimizing chart junk, highlighting the story</h2>
+<p></font></p>
+</div>
+<hr>
+<p><img data-src="image/chart.png" style="width:75.0%" /> <font size="4"></p>
+<ul>
+<li><strong>Title and subtitle</strong> These provide context for the chart.<br />
+</li>
+<li><strong>Coordinate system</strong> For most charts, this is provided by the horizontal and vertical axes, giving a cartesian system defined by X and Y coordinates.<br />
+</li>
+<li><strong>Scale</strong> Labeled tick marks and grid lines can help your audience read data values.<br />
+</li>
+<li><strong>Labels</strong> Think about other labels that may be necessary to explain the message of your graphic.<br />
+</li>
+<li><strong>Legend</strong> If you use color or shape to encode data, you will often need a legend to explain this encoding.</li>
+<li><strong>Source</strong> information Usually given as a footnote. Don’t forget this!<br><br><br></li>
+<li></font></li>
+</ul>
+</section><section id="using-color-effectively" class="slide level2">
+<h2>Using color effectively</h2>
+<hr>
+<p><font size="4"></p>
+<ul>
+<li>When encoding data with color, take care to fit the color scheme to your data, and the story you’re aiming to tell. Color is often used to encode the values of categorical data. Here you want to use <strong>“qualitative”</strong> color schemes, where the aim is to pick colors that will be maximally <strong>distinctive</strong>:<br />
+
+<center>
+<img data-src="image/brewer1.png" style="width:30.0%" />
+</center></li>
+<li>When using color to encode <strong>continuous</strong> data, it usually makes sense to use increasing intensity to indicate larger values. These are called <strong>“sequential”</strong> color schemes:<br />
+
+<center>
+<img data-src="image/brewer2.png" style="width:20.0%" />
+</center></li>
+<li>In some circumstances, you may have data that has <strong>positive</strong> and <strong>negative</strong> values, or which highlights deviation from a central value. Here, you should use a <strong>“diverging”</strong> color scheme, which will usually have two colors reasonably well separated, and cycle through a neutral color in the middle:<br />
+
+<center>
+<img data-src="image/brewer3.png" style="width:30.0%" />
+</center></li>
+<li></font></li>
+</ul>
+</section></section>
+<section><section id="ggplot-features" class="title-slide slide level1"><h1><code>ggplot</code>: <br> <strong>Features</strong></h1></section><section id="labelling" class="slide level2">
+<h2><strong>Labelling</strong></h2>
+<hr>
+<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1"></a>p <span class="op">+</span><span class="st"> </span><span class="kw">labs</span>(<span class="dt">title =</span> <span class="st">&quot;Miles per Gallon vs. Horsepower&quot;</span>,</span>
+<span id="cb9-2"><a href="#cb9-2"></a>       <span class="dt">x =</span> <span class="st">&quot;Miles/(US)gallon&quot;</span>, <span class="dt">y =</span> <span class="st">&quot;Horsepower&quot;</span>,</span>
+<span id="cb9-3"><a href="#cb9-3"></a>       <span class="dt">color =</span> <span class="st">&quot;Transmission&quot;</span>)</span></code></pre></div>
+<p><img src="DV_intro_files/figure-revealjs/unnamed-chunk-13-1.png" width="60%" style="display: block; margin: auto;" /></p>
+</section><section id="facetting" class="slide level2">
+<h2><strong>Facetting</strong></h2>
+<hr>
+<div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1"></a>p <span class="op">+</span><span class="st"> </span><span class="kw">facet_grid</span>(<span class="op">~</span>drv)</span></code></pre></div>
+<p><img src="DV_intro_files/figure-revealjs/unnamed-chunk-15-1.png" width="60%" style="display: block; margin: auto;" /></p>
+</section><section class="slide level2">
+
+<div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1"></a>p <span class="op">+</span><span class="st"> </span><span class="kw">facet_wrap</span>(<span class="op">~</span>class)</span></code></pre></div>
+<p><img src="DV_intro_files/figure-revealjs/unnamed-chunk-17-1.png" width="60%" style="display: block; margin: auto;" /></p>
+</section><section id="text-to-plot" class="slide level2">
+<h2><strong>Text to Plot</strong></h2>
+<hr>
+<div class="sourceCode" id="cb12"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1"></a>p1 &lt;-<span class="st"> </span>p <span class="op">+</span><span class="st"> </span><span class="kw">geom_text</span>() <span class="op">+</span><span class="st"> </span><span class="kw">labs</span>(<span class="dt">title =</span> <span class="st">&quot;p1: geom_text()&quot;</span>)</span>
+<span id="cb12-2"><a href="#cb12-2"></a>p2 &lt;-<span class="st"> </span>p <span class="op">+</span><span class="st"> </span><span class="kw">geom_text_repel</span>() <span class="op">+</span><span class="st"> </span><span class="kw">labs</span>(<span class="dt">title =</span> <span class="st">&quot;p2: geom_text_repel()&quot;</span>,<span class="dt">caption =</span> <span class="st">&quot;library(ggrepel)&quot;</span>)</span></code></pre></div>
+<p><img src="DV_intro_files/figure-revealjs/unnamed-chunk-20-1.png" width="60%" style="display: block; margin: auto;" /></p>
+</section><section class="slide level2">
+
+<div class="sourceCode" id="cb13"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1"></a>p1 &lt;-<span class="st"> </span>p <span class="op">+</span><span class="st"> </span><span class="kw">geom_label</span>() <span class="op">+</span><span class="st"> </span><span class="kw">labs</span>(<span class="dt">title =</span> <span class="st">&quot;p1: geom_label()&quot;</span>)</span>
+<span id="cb13-2"><a href="#cb13-2"></a>p2 &lt;-<span class="st"> </span>p <span class="op">+</span><span class="st"> </span><span class="kw">geom_label_repel</span>() <span class="op">+</span><span class="st"> </span><span class="kw">labs</span>(<span class="dt">title =</span> <span class="st">&quot;p2: geom_label_repel()&quot;</span>,<span class="dt">caption =</span> <span class="st">&quot;library(ggrepel)&quot;</span>)</span></code></pre></div>
+<p><img src="DV_intro_files/figure-revealjs/unnamed-chunk-22-1.png" width="60%" style="display: block; margin: auto;" /></p>
+</section><section id="complete-references" class="slide level2">
+<h2>Complete References:</h2>
+<p><a href="https://ggplot2.tidyverse.org/reference/" class="uri">https://ggplot2.tidyverse.org/reference/</a></p>
+</section><section id="colors-themes" class="slide level2">
+<h2><strong>Colors &amp; Themes</strong></h2>
+</section><section id="change-colors-by-group" class="slide level2">
+<h2><strong>Change colors by group</strong></h2>
+<hr>
+<div class="sourceCode" id="cb14"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1"></a>plot2 <span class="op">+</span><span class="st"> </span><span class="kw">geom_point</span>(<span class="kw">aes</span>(<span class="dt">color=</span>cyl), <span class="dt">size =</span> <span class="dv">2</span>)</span></code></pre></div>
+<p><img src="DV_intro_files/figure-revealjs/unnamed-chunk-24-1.png" width="55%" style="display: block; margin: auto;" /></p>
+</section><section id="change-colors-manually" class="slide level2">
+<h2><strong>Change colors manually</strong></h2>
+<hr>
+<p><font size=5> In ggplot2, <code>color</code> and <code>fill</code> are mapped separately. <code>color</code> refers to point and line color, whereas fill refers to bar fill (i.e. inner color), density fill, etc.<br />
+A custom color palettes can be specified using the functions :<br></font> <code>scale_fill_*</code>/<code>scale_color_*</code></p>
+<div class="sourceCode" id="cb15"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1"></a>plot2<span class="op">+</span><span class="kw">scale_color_manual</span>(<span class="dt">values=</span><span class="kw">c</span>(<span class="st">&quot;deepskyblue3&quot;</span>,<span class="st">&quot;dimgray&quot;</span>,<span class="st">&quot;goldenrod&quot;</span>))</span></code></pre></div>
+<p><img src="DV_intro_files/figure-revealjs/unnamed-chunk-26-1.png" width="40%" style="display: block; margin: auto;" /></p>
+</section><section id="adjusting-colors" class="slide level2">
+<h2><strong>Adjusting Colors</strong></h2>
+<hr>
+<p><font size="5"> A color can be specified either by name (e.g.: “red”) or by hexadecimal code (e.g. : “#FF1234”).<br>R colors can be viewed with <a href="http://www.stat.columbia.edu/~tzheng/files/Rcolor.pdf"><code>colors()</code></a>.</font></p>
+<div class="sourceCode" id="cb16"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1"></a>plot1 <span class="op">+</span><span class="st"> </span><span class="kw">geom_boxplot</span>(<span class="dt">fill=</span><span class="st">&#39;lightblue&#39;</span>, <span class="dt">color=</span><span class="st">&quot;darkred&quot;</span>)</span></code></pre></div>
+<p><img src="DV_intro_files/figure-revealjs/unnamed-chunk-27-1.png" width="50%" style="display: block; margin: auto;" /></p>
+</section><section id="predefined-themes" class="slide level2">
+<h2><strong>Predefined Themes</strong></h2>
+<hr>
+<p>ggplot2 provides some built-in themes, accessed with <code>theme_*</code></p>
+<p><img data-src="image/basethemes.png" style="width:70.0%" /></p>
+<p><font size="5.5"> The functions can take the two arguments: <code>base_size</code> &amp; <code>base_family</code> </font></p>
+</section><section class="slide level2">
+
+<p>or, you can also download another libraries, such as:</p>
+<p><img data-src="image/ggthemes.png" /></p>
+<div style="text-align: right">
+<p><a href="https://yutannihilation.github.io/allYourFigureAreBelongToUs/ggthemes/">ggthemes references</a></p>
+</div>
+</section><section id="customizing-theme-appearance" class="slide level2">
+<h2><strong>Customizing Theme Appearance</strong></h2>
+<hr>
+<p><img data-src="image/cheatsheet.png" /></p>
+</section><section class="slide level2">
+
+<div style="text-align: left">
+<p><font size="5"> <strong>The function <code>theme()</code> is used to control non-data parts of the graph including :</strong><br> - <strong>Line elements</strong> : axis lines, minor/major grid lines, plot panel border, etc.<br />
+- <strong>Text elements</strong> : plot title, axis titles, legend title and text, axis tick mark labels, etc.<br />
+- <strong>Rectangle elements</strong> : plot background, panel background, legend background, etc.<br />
+<br> <strong>There is a specific function to modify each of these three elements:</strong><br> - <code>element_line()</code> to modify the line elements of the theme<br />
+- <code>element_text()</code> to modify the text elements<br />
+- <code>element_rect()</code> to change the appearance of the rectangle elements<br />
+- <code>element_blank()</code>to remove each of the elements</p>
+</div>
+<p></font></p>
+</section><section id="plot-with-fully-customized-theme" class="slide level2">
+<h2><strong>Plot with fully customized theme:</strong></h2>
+<hr>
+<div class="sourceCode" id="cb17"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1"></a><span class="kw">source</span>(<span class="st">&quot;image/algoritma.R&quot;</span>)</span>
+<span id="cb17-2"><a href="#cb17-2"></a></span>
+<span id="cb17-3"><a href="#cb17-3"></a>plot2 <span class="op">+</span><span class="st"> </span><span class="kw">labs</span>(<span class="dt">title =</span> <span class="st">&quot;Light-weighted Cars Tend to Consume More Fuel&quot;</span>, <span class="dt">subtitle =</span> <span class="st">&quot;As revealed by the road tests&quot;</span>,<span class="dt">caption =</span> <span class="st">&quot;Source:  1974 Motor Trend US magazine&quot;</span>, <span class="dt">x =</span> <span class="st">&quot;Weight (1000 lbs)&quot;</span>, <span class="dt">y =</span> <span class="st">&quot;Miles/(US) gallon&quot;</span>)<span class="op">+</span></span>
+<span id="cb17-4"><a href="#cb17-4"></a><span class="st">  </span><span class="kw">theme_algoritma_dark</span>(<span class="dt">base_size=</span><span class="dv">10</span>)<span class="op">+</span></span>
+<span id="cb17-5"><a href="#cb17-5"></a><span class="st">  </span><span class="kw">scale_color_algoritma_dark</span>()</span></code></pre></div>
+</section><section class="slide level2">
+
+<p><img src="DV_intro_files/figure-revealjs/unnamed-chunk-29-1.png" width="100%" style="display: block; margin: auto;" /></p>
+</section></section>
+<section id="happy-learning-and-coding" class="title-slide slide level1"><h1>Happy Learning and Coding!</h1></section>
+    </div>
+  </div>
+
+  <script src="DV_intro_files/reveal.js-3.3.0.1/lib/js/head.min.js"></script>
+  <script src="DV_intro_files/reveal.js-3.3.0.1/js/reveal.js"></script>
+
+  <script>
+
+      // Full list of configuration options available at:
+      // https://github.com/hakimel/reveal.js#configuration
+      Reveal.initialize({
+        // Push each slide change to the browser history
+        history: true,
+        // Vertical centering of slides
+        center: true,
+        // Transition style
+        transition: 'default', // none/fade/slide/convex/concave/zoom
+        // Transition style for full page slide backgrounds
+        backgroundTransition: 'default', // none/fade/slide/convex/concave/zoom
+
+        menu: {
+          numbers: true,
+          custom: false,
+          themes: false,
+          transitions: false
+        },
+
+
+
+        chalkboard: {
+          toggleNotesButton: true,
+          theme: 'black',
+        },
+
+        keyboard: {
+          67: function() { RevealChalkboard.toggleNotesCanvas() },    // toggle notes canvas when 'c' is pressed
+          66: function() { RevealChalkboard.toggleChalkboard() }, // toggle chalkboard when 'b' is pressed
+          46: function() { RevealChalkboard.clear() },    // clear chalkboard when 'DEL' is pressed
+           8: function() { RevealChalkboard.reset() },    // reset chalkboard data on current slide when 'BACKSPACE' is pressed
+          68: function() { RevealChalkboard.download() }, // downlad recorded chalkboard drawing when 'd' is pressed
+        },
+
+        // Optional reveal.js plugins
+        dependencies: [
+          { src: 'DV_intro_files/reveal.js-3.3.0.1/plugin/notes/notes.js', async: true },
+          { src: 'DV_intro_files/reveal.js-3.3.0.1/plugin/zoom-js/zoom.js', async: true },
+          { src: 'DV_intro_files/reveal.js-3.3.0.1/plugin/chalkboard/chalkboard.js', async: true },
+          { src: 'DV_intro_files/reveal.js-3.3.0.1/plugin/menu/menu.js', async: true },
+        ]
+      });
+    </script>
+  <!-- dynamically load mathjax for compatibility with self-contained -->
+  <script>
+    (function () {
+      var script = document.createElement("script");
+      script.type = "text/javascript";
+      script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+      document.getElementsByTagName("head")[0].appendChild(script);
+    })();
+  </script>
+
+<script>
+  (function() {
+    if (window.jQuery) {
+      Reveal.addEventListener( 'slidechanged', function(event) {  
+        window.jQuery(event.previousSlide).trigger('hidden');
+        window.jQuery(event.currentSlide).trigger('shown');
+      });
+    }
+  })();
+</script>
+
+
+  </body>
+</html>

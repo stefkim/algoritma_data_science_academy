@@ -1,0 +1,150 @@
+---
+title: "Additional Material: Random Forest Regression"
+author: "Inayatus"
+date: "`r format(Sys.Date(), '%B %e, %Y')`"
+output: 
+  html_document:
+    toc: true
+    toc_depth: 1
+    toc_float: 
+        collapsed: false
+    df_print: paged 
+    number_sections: true
+    theme: cosmo
+    highlight: tango
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, 
+                      warning = FALSE, 
+                      message = FALSE, 
+                      fig.align = "center",
+                      comment = "#>")
+options(scipen = 99)
+library(dplyr)
+```
+
+# [Additional Material] Random Forest Regression
+
+Random Forest adalah salah satu jenis Ensemble Method. Random Forest melakukan prediksi dengan membuat banyak Decision Tree. Masing-masing Decision Tree memiliki karakteristik masing-masing dan tidak saling berhubungan satu sama lain. Random Forest kemudian melakukan prediksi untuk masing-masing decision tree, kemudian dari sekian banyak hasil prediksi tersebut dilakukan voting. Kelas dengan jumlah terbanyak akan menjadi hasil prediksi final. Random Forest memanfaatkan konsep bernama Bagging: Bootstrap and Aggregation. Berikut adalah proses yang terjadi:
+
+1. Membuat data dengan random sampling dari data yang ada dan mengizinkan adanya duplikat (Bootstrap sampling)
+2. Membuat decision tree dari masing-masing data hasil bootstrap sampling, digunakan prediktor sebanyak mtry yang juga dipilih secara random
+3. Melakukan prediksi data baru untuk setiap decision tree
+4. Melakukan majority voting untuk menentukan hasil prediksi final (Aggregation)
+
+Kelebihan:
+
+- Mereduksi bias sekaligus variance dari decision tree
+- Robust untuk prediksi
+- Automatic Feature Selection: pemilihan prediktor secara otomatis & random pada pembuatan decision tree
+- Out-of-Bag error untuk pengganti evaluasi model ke data test (dibahas selanjutnya)
+
+
+## Workflow Analysis
+
+1. Read data
+```{r}
+insurance <- read.csv("data_input/insurance.csv")
+head(insurance)
+```
+
+2. Pre-processing 
+
+```{r}
+# insurance <- insurance %>% 
+#   mutate_if(is.character, as.factor)
+```
+
+3. Penentuan target variabel dan prediktor
+
+Target variabel : charges
+Prediktor variabel : semua selain charges
+
+```{r}
+library(GGally)
+ggpairs(insurance)
+```
+
+
+4. Splitting data menjadi data train dan test
+
+Proporsi data train dan test biasanya 80%:20% atau 90%:10%.
+
+```{r}
+set.seed(100)
+intrain <- sample(nrow(insurance), nrow(insurance)*0.8)
+insurance_train <- insurance[intrain,]
+insurance_test <- insurance[-intrain,]
+```
+
+5. Model fitting
+
+```{r}
+library(caret)
+set.seed(100)
+control <- trainControl(method = "cv", number = 3)
+# pembuatan model random forest
+model_insurance_rf <- train(charges~., data = insurance_train, method = "rf", trControl = control)
+model_insurance_rf
+```
+
+```{r}
+set.seed(100)
+control <- trainControl(method = "cv", number = 3)
+# pembuatan model random forest
+model_insurance_lm <- train(charges~., data = insurance_train, method = "lm", trControl = control)
+model_insurance_lm
+```
+
+6. Model evaluation dari out of bag error
+```{r}
+library(randomForest)
+model_insurance_rf$finalModel
+```
+
+7. Prediksi menggunaka data test
+
+```{r}
+pred_rf <- predict(model_insurance_rf, insurance_test)
+pred_lm <- predict(model_insurance_lm, insurance_test)
+```
+
+8. Model evaluation berdasarkan data test
+
+```{r}
+library(MLmetrics)
+MLmetrics::MAE(y_pred = pred_rf, y_true = insurance_test$charges)
+MLmetrics::MAE(y_pred = pred_lm, y_true = insurance_test$charges)
+```
+
+Cek error berdasarkan data train
+```{r}
+pred_train_rf <- predict(model_insurance_rf, insurance_train)
+pred_train_lm <- predict(model_insurance_lm, insurance_train)
+MLmetrics::MAE(y_pred = pred_train_rf, y_true = insurance_train$charges)
+MLmetrics::MAE(y_pred = pred_train_lm, y_true = insurance_train$charges)
+```
+
+Tujuan membandingkan hasil prediksi pada data train dengan hasil prediksi pada data test adalah untuk mengetahui kemampuan model apakah sudah sama baiknya jika digunakan dalam melakukan prediksi data baru.
+
+```{r echo=FALSE}
+knitr::include_graphics("assets/under-over-just-right.png")
+```
+
+Perhatikan 3 kondisi di atas:
+
+* model bagian kiri yang terlalu **sederhana** memiliki **bias tinggi** dan **variance rendah** sehingga hasil prediksinya tidak terlalu tepat (**Underfitting**). Contoh model dengan karakteristik ini adalah model linear regression.
+* model bagian kanan yang terlalu **kompleks** memiliki **variance tinggi** dan **bias rendah** sehingga prediksi di data trainnya amat tepat, namun performanya buruk dalam memprediksi data test (**Overfitting**). Contoh model dengan karakteristik ini adalah decision tree.
+* kondisi yang kita inginkan adalah model di bagian tengah: yang memiliki **bias** dan **variance** yang saling berimbang. Salah satu tujuan dari model tuning adalah mendapatkan bias-variance trade-off yang optimal ini, sehingga didapatkan model seperti di bagian tengah (“Just Right”).
+
+```{r}
+# model random forest
+MAPE(y_pred = pred_train_rf, y_true = insurance_train$charges)*100
+MAPE(y_pred = pred_rf, y_true = insurance_test$charges)*100
+
+#model linear regression
+MAPE(y_pred = pred_train_lm, y_true = insurance_train$charges)*100
+MAPE(y_pred = pred_lm, y_true = insurance_test$charges)*100
+```
+

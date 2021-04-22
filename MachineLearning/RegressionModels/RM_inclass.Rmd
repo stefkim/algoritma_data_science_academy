@@ -1,0 +1,1211 @@
+---
+title: "Regression Model: Inclass Material"
+author: "Inayatus"
+date: "`r format(Sys.Date(), '%B %e, %Y')`"
+output: 
+  html_document:
+    toc: true
+    toc_depth: 1
+    toc_float: 
+        collapsed: false
+    df_print: paged 
+    number_sections: true
+    theme: cosmo
+    highlight: tango
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, 
+                      warning = FALSE, 
+                      message = FALSE, 
+                      fig.align = "center",
+                      comment = "#>")
+options(scipen = 99)
+```
+
+```{r}
+library(dplyr)
+library(leaps)
+library(MASS)
+```
+
+# Machine Learning
+
+```{r echo=FALSE}
+knitr::include_graphics("assets/cheatsheet.png")
+```
+
+Machine learning digunakan karena kebutuhan data yang semakin banyak, sehinga kita gunakan untuk mempercepat pengerjaan dalam analisis(prediksi) maupun exploratory data.
+
+Machine learning secara umum dibagi menjadi dua jenis yaitu:
+
+1. **Supervised learning** : memiliki target variabel (y). Dibagi menjadi dua berdasarkan target variabel : 
+  
+  - Regression : target variabelnya numerik
+  - Classification : target variabel kategorik
+  
+2. **Unsupervised Learning** : tidak memiliki target variabel (y)
+
+  - Clustering
+  - Dimensionality Reduction
+  
+## Interpretability vs Robust
+
+1. Interpretability   
+* (+) model dapat diinterpretasikan
+* (-) cenderung memiliki eror yang cukup besar
+
+2. Robust     
+* (-) tidak bisa diinterpretasikan
+* (+) hasil eror cenderung kecil 
+
+
+```{r echo=FALSE}
+knitr::include_graphics("assets/RM.png")
+```
+
+Regression model merupakan **Supervised Learning** karena data yang dibutuhkan harus memiliki target variabel (y). Target variabel dari Regression Model harus bertipe numerik, namun untuk prediktornya (x) boleh numerik/kategorik
+
+**Business Problem**
+
+Pemilihan variabel target biasanya dikaitkan dengan masalah bisnis yang ingin diselesaikan:
+
+1. Sebuah agen properti berusaha membangun sebuah model untuk menebak harga sebuah properti untuk digunakan sebagai acuan kontrol dalam menjaga harga pasar. Untuk itu mereka mengembangkan sebuah model dengan:
+
+- Variabel target: 
+- Variabel prediktor: 
+
+2. Seorang pemilik restoran ingin menebak ingin menebak berapa banyak penjualan yang akan dihasilkan di bulan depan oleh restorannya.  Untuk itu mereka mengembangkan sebuah model dengan:
+
+- Variabel target: 
+- Variabel prediktor: 
+
+# Linear Regression
+
+Linear Regression adalah salah satu model machine learning yang dipakai untuk menyelesaikan kasus `regression` atau membuat model dengan target variabel numerik.
+
+## Simple Linear Regression
+
+Simple Linear Regression artinya kita hanya menggunakan 1 variabel atau hanya memiliki 1 prediktor untuk memprediksi target variabel.
+
+Sebagai gambaran awal, kita ingin memprediksi harga (price) dari berlian dengan mempertimbangkan berat (carat) dari berlian tersebut. Untuk mempermudah dalam pemahaman dan visualisasi data, kita ambil 500 data secara acak saja.
+
+* Import data
+
+Kita akan gunakan data `diamonds` dari package ggplot2.
+
+```{r}
+library(ggplot2)
+head(diamonds)
+```
+
+Data Description:
+
+* `price`: price in US dollars 
+* `carat`: weight of the diamond
+* `cut`: quality of the cut (Fair, Good, Very Good, Premium, Ideal)
+* `color`: diamond color, from D (best) to J (worst)
+* `clarity`: a measurement of how clear the diamond is (I1 (worst), SI2, SI1, VS2, VS1, VVS2, VVS1, IF (best))
+* `x`: length in mm
+* `y`: width in mm
+* `z`: depth in mm 
+* `depth`: total depth percentage = $\frac{2 \times z }{x + y}$
+* `table`: width of top of diamond relative to widest point 
+
+Pada kasus ini, kita akan mencoba menggunakan 500 sample data acak.
+
+```{r}
+# Hanya ambil 500 data secara acak
+set.seed(100)
+
+
+# Visualization
+
+```
+
+* Inspect data berdasarkan struktur datanya
+```{r}
+
+```
+
+* Cek missing value
+```{r}
+
+```
+
+**Business Problem**
+
+Ingin  memprediksi harga (**price**) dari berlian dengan mempertimbangkan berat (**carat**) dari berlian tersebut.. Tentukan:
+
+- Variabel target: 
+- Variabel prediktor: 
+
+* Eksplorasi data
+
+**Cek persebaran data**
+
+  + Cek persebaran variabel Profit:   
+
+    - histogram atau boxplot
+```{r}
+
+```
+
+  + Cek persebaran variabel Sales
+```{r}
+
+```
+
+Pada variabel Profit dan Sales terdapat outlier. 
+
+**Cek korelasi antar variabel target dan prediktor**
+
+    - menggunakan nilai korelasi
+```{r}
+
+```
+
+    - menggunakan visualisasi
+```{r}
+
+```
+
+Kesimpulan dari plot:
+
+Ketika kita mendapatkan ada dua variabel yang saling berhubungan erat. Maka dapat dikatakan kedua variabel tersebut memiliki indikasi pasangan prediktor - target yang baik. 
+
+> Nilai korelasi yang besar adalah indikasi yang baik untuk hubungan prediktor dan target.
+
+## Behind The Machine
+
+### Slope and Intercept
+
+Garis atau tren linear yang didapatkan dari model regresi linear secara matematis didapatkan dari persamaan berikut:
+
+$$
+y = \alpha + \beta\ x \\
+price = \alpha + \beta\ carat
+$$
+
+- y: target variabel
+- $\alpha$: intercept
+- $\beta$: slope atau koefisien
+- x: prediktor
+
+Formula model regresi secara umum:
+
+$$
+\hat{y}=\beta_0+\beta_1.x_1+...+\beta_n.x_n
+$$
+ 
+dimana, $x_1,...,x_n$ merupakan variabel prediktor yang digunakan.
+
+
+
+### Membuat Model Regresi
+
+```{r echo=FALSE}
+knitr::include_graphics("assets/lm-now.jpeg")
+```
+
+Pertama, kita akan coba prediksi harga diamond (`price`) terhadapberat diamond (`carat`). Untuk membuat model regresi, dimana kita hanya memprediksi menggunakan satu variabel prediktor saja, kita bisa gunakan function `lm(formula = y~x, data)`
+
+argumen dalam fungsi `lm()`:
+
+* `formula` = y~x : target~prediktor
+* `data` = data frame yang digunakan
+
+```{r}
+
+```
+
+Untuk memprediksi nilai price atau harga berlian, maka bisa menggunakan rumus berikut sesuai hasil dari `lm()`.
+
+$$
+price =  \times carat
+$$
+
+* $\alpha$: intercept, berapa harga berlian jika nilai carat atau prediktornya adalah 0? 
+
+Ketika carat dari sebuah berlian adalah 0, maka harga berlian tersebut adalah -2320
+
+* $beta$: slope atau koefisien dari setiap prediktor. Jika nilai carat naik sebanyak 1 unit, berapa besar perubahannya terhadap harga?
+
+Setiap kenaikan carat sebanyak 1 akan diikuti kenaikan harga sebesar 7926
+
+   - Jika carat = 1, maka price = -2320 + 7926 x 1 = 5606
+   - Jika carat = 2, maka price = -2320 + 7926 x 2 = 13532
+   - Jika carat = 0.5, maka price = -2320 + 7926 x 0.5 = 1643
+   - Jika carat = 1.5, maka price = -2320 + 7926 x 1.5 = 9569
+
+## Ordinary Least Square
+
+Bagaimana regresi linear menentukan nilai `slope` dan `intercept` yang digunakan? Padahal saya bisa menggunakan nilai slope dan intercept berapapun untuk membuat sebuah model.
+
+```{r}
+# Membuat slope dan intercept secara random
+set.seed(123)
+df_random <- data.frame(intercept = model_diamond$coefficients["(Intercept)"] * runif(100, max = 2),
+                        slope = model_diamond$coefficients["carat"] * runif(100, max = 2)
+                        )
+
+# Visualization
+small_diamond %>% 
+  ggplot(aes(x= carat, y = price)) +
+  geom_abline(data = df_random, aes(slope = slope, intercept = intercept), alpha = 0.2, color = "red") +
+  geom_point(alpha = 0.5) +
+  geom_abline(intercept = model_diamond$coefficients["(Intercept)"], 
+              slope = model_diamond$coefficients["carat"],
+              color = "blue"
+              ) +
+  theme_minimal()
+```
+
+Jika diperhatikan, dari setiap titik memiliki jarak terhadap garis linearnya. Jarak ini menunjukkan bahwa dari prediksi yang dibuat model terdapat perbedaan dengan data aktualnya. Jarak atau kesalahan prediksi ini kita sebut dengan error atau `residual`.
+
+```{r}
+small_diamond %>% 
+  ggplot(aes(x= carat, y = price)) +
+  geom_segment(aes(xend = carat, yend = model_diamond$fitted.values),
+               alpha = 0.5, color = "red"
+               ) +
+  geom_point(alpha = 0.5) +
+  geom_abline(intercept = model_diamond$coefficients["(Intercept)"], 
+              slope = model_diamond$coefficients["carat"],
+              color = "blue"
+              ) +
+  theme_minimal() 
+```
+
+Statistik tidak mungkin memprediksi tepat 100%. Maka dari itu, untuk memperoleh model yang baik kita perlu menghasilkan error yang minimum. Cara memperoleh error yang minimum menggunakan pendekatan OLS (Ordinary Least Square).
+
+Konsep dari ordinary least square regression yaitu melakukan prediksi dengan memperoleh hasil prediksi yang memiliki nilai eror terkecil. Pendekatan yang digunakan yaitu menggunakan nilai mean.
+
+```{r eval=FALSE}
+#  run code pada console
+library(manipulate)
+
+expr1 <- function(mn) {
+  
+  mse <- mean((small_diamond$price - mn)^2)
+  
+  hist(small_diamond$price, breaks = 20, main = paste("mean = ", mn, "MSE = ", round(mse, 2), sep = ""))
+    abline(v = mn, lwd = 2, col = "darkred")
+    
+}
+
+manipulate(expr1(mn), mn = slider(3600, 4650, step = 10))
+mean(small_diamond$price)
+```
+
+> Membuat prediksi menggunakan nilai rata-rata akan menghasilkan error terkecil merupakan konsep dari OLS
+
+```{r}
+
+```
+
+## Interpretasi Model
+
+```{r}
+
+```
+Formula model regresi price = $price = $
+
+**Interpretasi model regresi**
+
+- Intercept: Titik awal garis regresi terbentuk, menunjukkan nilai target variabel ketika nilai prediktor = 0
+
+> Ketika nilai carat = 0, maka nilai price sama dengan -2320
+
+- Slope: kenaikan setiap 1 satuan, kenaikan 1 prediktor meningkatkan target variabel sebesar slope
+
+> Setiap kenaikan 1 satuan pada berat diamond(carat), maka price diamond akan naik sebesar 7926.
+
+- Koefisien bernilai positif = korelasi positif
+
+> Dengan nilai slope sebesar 7926, artinya hubungan antara berat diamond (carat) dan price diamond positif, ketika berat diamond (carat) naik maka price diamond akan naik, ketika berat diamond (carat) turun price diamond akan turun.
+
+- **Nilai p-value** sebagai tolak ukur apakah variabel prediktor berpengaruh signifikan terhadap variabel target. Dikatakan signifikan ketika nilai p-value < 0.05. 
+
+> Hipotesis :
+- H0 : berat diamond (carat) tidak mempengaruhi price diamond
+- H1 : berat diamond (carat) mempengaruhi price diamond
+
+- **R-squared**: seberapa baik prediktor dapat menjelaskan keberagaman kelas target. Ukuran yang bisa kita gunakan untuk mengukur "goodness of fit" atau "kebaikan model". 
+
+Range dari R-Squared adalah 0-1 atau 0-100%, dimana:
+
+- semakin mendekati 0, maka model yang diperoleh masih kurang terjelaskan menggunakan prediktor yang ada (poor fit)
+- semakin mendekati 1, maka model yang diperoleh sudah dapat terjelaskan dengan baik menggunakan prediktor yang ada 
+
+$$
+R^2 = 1 - \frac{\sum(y_i - \hat y_i)^2}{\sum(y_i - \overline y)^2}
+$$
+Dari `model_diamond` kita peroleh R-Squared sebesar ..%, artinya model regresi kita hanya mampu menjelaskan variansi dari harga diamond (price) sebesar ..% berdasarkan berat diamond (carat). 
+
+Ketika kita ingin membeli diamond dengan berat 2.4, besaran uang (price) yang harus disiapkan yaitu 
+```{r}
+
+```
+
+---
+
+## Dive Deeper 1
+
+Pada case ini kita ingin coba prediksi nilai `inequality` berdasarkan variabel `gdp` dari data `crime.csv`
+
+* Read data
+
+```{r}
+library(dplyr)
+crime <- read.csv("data_input/crime.csv") %>% 
+  dplyr::select(-X)
+names(crime) <- c("percent_m", "is_south", "mean_education", "police_exp60", "police_exp59", "labour_participation",
+                  "m_per1000f", "state_pop", "nonwhites_per1000", "unemploy_m24", "unemploy_m39", "gdp", "inequality",
+                  "prob_prison", "time_prison", "crime_rate")
+head(crime)
+```
+
+Glossary data `crime` :
+
+- `percent_m`: percentage of males aged 14-24
+- `is_south`: whether it is in a Southern state. 1 for Yes, 0 for No.  
+- `mean_education`: mean years of schooling  
+- `police_exp60`: police expenditure in 1960  
+- `police_exp59`: police expenditure in 1959
+- `labour_participation`: labour force participation rate  
+- `m_per1000f`: number of males per 1000 females  
+- `state_pop`: state population  
+- `nonwhites_per1000`: number of non-whites resident per 1000 people  
+- `unemploy_m24`: unemployment rate of urban males aged 14-24  
+- `unemploy_m39`: unemployment rate of urban males aged 35-39  
+- `gdp`: gross domestic product per head  
+- `inequality`: income inequality  
+- `prob_prison`: probability of imprisonment  
+- `time_prison`: avg time served in prisons  
+- `crime_rate`: crime rate in an unspecified category
+
+
+* Tentukan varibael prediktor dan variabel target apabila kita ingin membuat model yang memprediksi `inequality` berdasarkan `gdp`
+
+- variabel target: 
+- variabel prediktor: 
+
+* Buatlah model linear regresi tersebut menggunakan fungsi `lm()`
+```{r}
+
+```
+
+a. Model regesi yang diperoleh:
+
+
+b. Apakah variabel prediktor berpengaruh signifikan terhadap variabel target?
+
+c. Goodness of fit (R-Squared)
+
+
+```{r}
+# Visualizing fitting line
+
+```
+
+---
+
+Prediksi harga diamond, apabila kita memiliki berat diamond sebagai berikut:
+
+```{r}
+carat <- c(0.97, 1.2, 0.69, 0.89)
+```
+
+Gunakan function `predict()` untuk melakukan prediksi
+```{r}
+
+```
+
+```{r}
+# Visualizing fitting line
+
+```
+
+* Informasi yang terkandung pada model regresi
+```{r}
+
+```
+
+
+<center> **--- End of Day 1 ---** </center>
+
+---
+
+
+## Leverage vs Influence
+
+Leverage adalah nilai yang jauh dari kerumunan datanya, sering disebut sebagai **outlier**. Nilai leverage dapat mempengaruhi model linier regresi atau pun tidak.
+
+Nilai leverage bisa mempengaruhi model secara signifikan atau pun tidak.   
+* Ketika leverage mempengaruhi model secara signifikan : high influence
+* Ketika leverage tidak mempengaruhi model secara signifikan : low influence
+
+Nilai leverage ketika berpengaruh baik dalam artian meningkatkan nilai R-squared atau Adjusted R-square maka sebaiknya outlier tersebut kita pakai dalam pemodelan. Ketika nilai leverage berpangaruh buruk dalam artian menurun nilai R-squared atau Adjusted R-squared maka sebaiknya leverage tersebut kita buang.
+
+Untuk melakukan pengecekan leverage :
+
+* `hist()`
+* `boxplot()`
+
+Buatlah model regresi dengan menghilangkan nilai outlier pada variabel carat
+
+* Melakukan pengecekan outlier pada variabel carat
+```{r}
+
+```
+
+* Subset data `small_diamond` tanpa melibatkan nilai outlier pada variabel carat
+```{r}
+
+```
+
+* Membuat model tanpa outlier
+```{r}
+
+```
+
+
+Formulasi model no outlier :
+
+$$price = *carat$$
+
+Kita akan coba bandingkan model regresi yang menggunakan nilai outlier pada variabel carat dan tanpa nilai outlier
+```{r}
+
+```
+
+**Kesimpulan:** 
+
+
+# Multiple Linear Regression
+
+Multiple linear regression merupakan metode linear regresi dengan menggunakan **lebih dari 1** variabel prediktor. 
+
+**Business Problem**
+
+Bayangkan Anda dipekerjakan sebagai pegawai magang di dewan kota yang merencanakan beberapa balapan pada suatu bukit di Jawa Barat. Pertanyaan bisnis yang terbentuk: Mengingat **jarak** dan **ketinggian** dari setiap balapan berikutnya, apakah Anda dapat memprediksi waktu balapan (dalam menit) untuk setiap balapan ini?
+
+Kita akan menggunakan data `hills` dari package `MASS`
+```{r}
+library(MASS)
+data(hills)
+hills
+```
+
+
+Deskripsi data:
+
+* `dist`: jarak dalam mil
+* `climb`: total ketinggian dalam seluruh rute (satuan dalam kaki)
+* `time`: waktu tempuh yang tercatat dalam menit
+
+Katakanlah kita ingin melakukan prediksi waktu tempuh (**time**) berdasarkan jarak dan total ketinggian (**dist** dan **climb**). 
+
+* Variabel target : 
+* Variabel prediktor : 
+
+Buatlah model multiple linear regressionnya.
+
+Formula model regresi:
+
+`formula = y~x1+x2` atau `formula = y~.`
+```{r}
+
+```
+
+Formula regresi yang terbentuk:
+
+
+
+**Interpretasi model**
+
+*
+*
+
+
+## R-Squared vs Adjusted R-Squared
+
+Ketika kita menggunakan lebih dari satu prediktor, R-Square akan selalu bertambah seiring dengan bertambahnya variabel prediktor baru meskipun belum tentu memiliki pengaruh terhadap model. Untuk mengatasi hal ini, dibuat metrik baru bernama `Adjusted R-Square` yang menghitung nilai R-Square tetapi juga mempertimbangkan jumlah variabel yang digunakan sehingga nilai R-Square yang ditampilkan lebih tepat.
+
+$$
+Adjusted\ R^2 = 1 - \frac{(1-R^2)(n-1)}{n-k-1}
+$$
+
+Keterangan:
+
+- n: Jumlah data
+- k: Jumlah variabel prediktor
+- $R^2$: Nilai $R^2$
+
+> R-squared digunakan untu simple linear regression, sedangkan Adjusted R-squared digunakan untuk multiple regression. Karena Adjusted R-squared memperhitungkan banyak observasi dan variabel prediktor yang digunakan.
+
+```{r}
+# membuat beberapa model
+
+```
+
+```{r}
+# membandingkan nilai r-quared model
+
+```
+
+```{r}
+# membandingkan nilai adj r-quared model
+
+```
+
+Setelah kemarin kita hanya menggunakan 1 prediktor untuk membuat model regresi, sekarang kita coba menggunakan beberapa prediktor secara bersamaan. Kita akan menggunakan data `train_insurance.csv` yang berisi informasi catatan biaya medis yang ditagih oleh sebuah lembaga asuransi kepada pemegang premi asuransinya.
+
+```{r}
+insurance <- read.csv("data_input/train_insurance.csv")
+
+str(insurance)
+```
+
+Data Description:
+
+- `age`: Age of primary beneficiary
+- `sex`: Insurance contractor gender, female, male
+- `bmi`: Body mass index, providing an understanding of body, objective index of body weight (kg/m^2)
+- `children`: Number of children covered by health insurance / Number of dependents
+- `smoker`: Does the beneficiary actively smoking?
+- `region`: The beneficiary's residential area in the US, northeast, southeast, southwest, northwest.
+- `charges`: Individual medical costs billed by health insurance
+
+## Data Science Workflow
+
+Berikut adalah gambaran umum workflow atau alur kerja dalam sebuah project data science.
+
+```{r echo=FALSE}
+knitr::include_graphics("assets/data-science.png")
+```
+
+## Data Preprocessing/Wrangling (Tidy and Transform)
+
+Sebelum membuat sebuah model, kita pastikan terlebih dahulu apakah terdapat kolom atau variabel yang tipe datanya kurang tepat
+
+-  
+-
+
+
+
+```{r}
+# your code here
+
+```
+
+## Exploratory Data Analysis (Transform and Visualize)
+
+Sebelum membuat model, kita biasakan terlebih dahulu untuk memeriksa data yang kita gunakan. Tahapan ini disebut dengan Exploratory Data Analysis (EDA) dan biasa dilakukan dengan memvisualisasikan atau melihat summary dari data. Beberapa tujuan dari EDA:
+
+- Memeriksa adanya missing value (NA)
+- Melihat distribusi data
+- Memeriksa adanya outlier
+- Memeriksa hubungan antar variabel
+- Memeriksa perbandingan kategori di target variabel pada kasus klasifikasi
+
+### Scatterplot
+
+Melihat persebaran data melalui nilai BMI dan Medical Charges
+
+```{r}
+# your code here
+
+```
+
+```{r}
+insurance %>% 
+  ggplot(aes(bmi, charges)) +
+  geom_point() +
+  geom_smooth(method = "lm") +
+  theme_minimal()
+```
+
+
+### Korelasi
+
+Melihat hubungan antar variabel melalui nilai korelasinya. Tahapan ini hanya bisa dilakukan untuk memeriksa variabel dengan tipe data numerik
+
+```{r}
+library(GGally)
+
+# Mencari korelasi dari variabel numerik
+
+```
+
+Pairwise correlation : mencari korelasi antar variabel secara satu per satu
+
+### Heatmap
+
+Membandingkan rata-rata medical charge antara orang yang merokok dan tidak merokok.
+
+```{r}
+# your code here
+
+```
+
+Membandingkan rata-rata medical charge dari masing-masing daerah dan jenis kelamin.
+```{r}
+# your code here
+
+```
+
+
+```{r}
+df_agg %>% 
+  ggplot(aes(x = region, y = sex, fill = charges )) +
+  geom_tile() +
+  scale_fill_gradient(low = "firebrick", high = "lightyellow") +
+  theme_minimal()
+```
+
+Membuat model dengan variabel numerik saja: age, children, bmi untuk memprediksi medical charge.
+
+```{r}
+# Membuat model regresi linear
+
+```
+
+### Categorical Variable
+
+Kita coba menambahkan variabel kategorik ke dalam model yaitu variabel `sex`.
+
+```{r}
+# membuat model dengan tambahan variabel sex
+
+```
+
+
+Pada `summary()`, yang muncul bukan variabel `sex` tetapi `sexmale`. Kita coba cek pada variabel `sex` terdapat nilai male dan female.
+
+```{r}
+# cek summary model
+```
+
+Jika kita memasukkan sebuah variabel kategori ke dalam model, variabel tersebut akan diubah menjadi variabel `dummy`. Salah satu cara yang paling mudah digunakan untuk membuat dummy variable adalah menggunakan metode `one-hot encoding`.
+
+Misalkan pada variabel sex terdapat 2 nilai: male, female. 
+
+Jika terdapat 2 nilai saja, maka hanya terdapat 1 dummy variable
+
+sex_male: 1 menunjukkan bahwa nilai sex = male
+
+sex_male: 0 menunjukkan bahwa nilai sex = female
+
+```{r}
+# model coefficient
+
+```
+
+
+$$
+charge =  -7099.2 + 222.69 \times age + 348.2\times bmi + 513.6 \times children +   1165.8\times sexmale
+$$
+
+Ketika sex = male, medical charges bertambah sebesar 1165.7748 
+
+Profil:
+
+age: 20
+bmi: 25
+children: 0
+sex: male => sexmale: 1
+
+$$
+charge =  -7099.2 + 222.69 \times 20 + 348.2\times 25 + 513.6 \times 0 +   1165.8\times 1
+$$
+
+Profil:
+
+age: 20
+bmi: 25
+children: 0
+sex: female => sexmale: 0
+
+$$
+charge =  -7099.2 + 222.69 \times 20 + 348.2\times 25 + 513.6 \times 0 +   1165.8\times 0
+$$
+
+
+Jika terdapat 4 nilai seperti pada kolom region: northeast, northwest, southwest, southeast, maka dummy variabelnya akan ada 3 karena variabel dummy akan terbentuk sebanyak `k-1` variabel, dimana:
+
+* `k`: banyak kategori pada variabel kategorik
+
+* Jika regionnya adalah northwest, maka nilai variabel dummy-nya
+
+- region_northwest: 1
+- region_southwest: 0
+- region_southeast: 0
+
+* Jika regionnya adalah southwest, maka nilai variabel dummy-nya
+
+- region_northwest: 0
+- region_southwest: 1
+- region_southeast: 0
+
+* Jika regionnya adalah northeast, maka nilai variabel dummy-nya
+
+- region_northwest: 0
+- region_southwest: 0
+- region_southeast: 0
+
+* Jika regionnya adalah southeast, maka nilai variabel dummy-nya
+
+- region_northwest: 0
+- region_southwest: 0
+- region_southeast: 1
+
+Mengkonversi data kategori menjadi dummy variable
+
+```{r}
+model.matrix(charges ~ ., insurance) %>% 
+  as.data.frame()
+```
+
+```{r}
+# Menggunakan semua variabel untuk menjadi prediktor
+
+```
+
+Interpretasi:
+
+- smoker = yes, jika klien adalah perokok , medical charge bertambah 23848
+
+
+# Feature Selection (Step-wise Regression) {.tabset}
+
+Feature selection merupakan tahapan dalam memilih variabel yang akan digunakan
+
+Mengevaluasi model stepwise menggunakan nilai AIC (Akaike Information Criterion/ Information Loss). AIC menunjukkan banyak informasi yang hilang pada model.
+
+* **backward elimination**: Dari keseluruhan predictor yang digunakan, kemudian dievaluasi model dengan cara mengurangi variabel prediktor sehingga diperoleh model AIC (Akaike Information Criterion) terkecil.
+* **forward selection**: Dari model tanpa predictor, kemudian dievaluasi model dengan cara menambahkan variabel prediktor sehingga diperoleh model dengan AIC terkecil.
+* **both**: Dari model yang dibuat, bisa melakukan evaluasi model dengan cara menambahkan atau mengurangi variabel prediktor sehingga diperoleh model dengan AIC terkecil.
+
+```{r}
+# model tanpa prediktor
+
+# model dengan semua prediktor
+
+```
+
+## Backward
+
+Dari keseluruhan predictor yang digunakan, kemudian dievaluasi model dengan cara mengurangi variabel prediktor sehingga diperoleh model AIC terkecil.
+
+1. Menggunakan seluruh variabel
+
+2. Memilih variabel yang ketika dihilangkan, menghasilkan AIC terbaik
+
+3. Menghilangkan variabel yang dipilih dari tahap kedua
+
+4. Mengulangi step 2 dan step 3 hingga nilai AIC terbaik dihasilkan ketika tidak menghilangkan variabel apapun.
+
+```{r}
+
+```
+
+Bentuk model
+```{r}
+
+```
+
+## Forward
+
+Dari model tanpa predictor, kemudian dievaluasi model dengan cara menambahkan variabel prediktor sehingga diperoleh model dengan AIC terkecil.
+
+1. Tidak menggunakan variabel apapun
+
+2. Memilih variabel yang ketika ditambahkan menghasilkan AIC terbaik
+
+3. Menambahkan variabel yang dipilih dari tahap kedua
+
+4. Mengulangi step 2 dan 3 hingga nilai AIC terbaol dihasilkan ketika tidak menambahkan variabel
+
+```{r}
+
+```
+
+Bentuk model
+```{r}
+
+```
+
+
+## Both 
+
+Gabungan backward dan forward
+
+1. Menggunakan model tanpa prediktor/model dengan keseluruhan prediktor.
+
+2. Memilih penambahan variabel atau pengurangan variabel yang menghasilkan AIC terbaik.
+
+3. Menambahkan atau mengurangi variabel yang dipilih dari tahap kedua
+
+4. Meneruskan step 2 dan 3 hingga nilai AIC terbaik dihasilkan ketika tidak menambahkan variabel apa-apa.
+
+```{r}
+
+```
+
+Bentuk model
+```{r}
+
+```
+
+Perbandingan nilai adjusted r-squared pada ketiga model yang sudah dibuat
+```{r}
+
+```
+Model terbaik berdasarkan adjusted r-squared terbesar adalah `model_backward` dan `model_both`
+```{r}
+
+```
+
+```{r}
+
+```
+
+**Hal yang bisa dilakukan untuk improve model:**
+
+1. Menggunakan variabel prediktor yang signifikan
+2. Menambahkan data
+3. Menggunakan model lain (polinomial regressio, random forest regression, dll)
+
+
+# Confidence Interval
+
+Mencari hasil prediksi dengan confidence interval 95%
+```{r}
+
+```
+
+Tujuan dari melihat convidence interval : mengetahui range dari hasil prediksi agar ketika ingin menggeser hasil tebakan/prediksi kita tahu batas bawah dan atas dari prediksinya. 
+
+
+<center> **---End of Day 2---** </center>
+
+# Asumsi linear regression {.tabset}
+
+Sebagai salah satu model statistik, regresi linear memiliki beberapa asumsi yang perlu dipenuhi agar interpretasi yang didapatkan tidak bersifat bias. Asumsi ini hanya perlu dipenuhi jika tujuan membuat model regresi linear adalah menginginkan interpretasi atau melihat efek dari setiap prediktor terhadap nilai target variabel. Jika hanya ingin menggunakan regresi linear untuk melakukan prediksi, maka asumsi model tidak wajib dipenuhi.
+
+Misalkan saya menggunakan data laporan kriminalitas di beberapa states di US pada tahun 1960
+
+```{r}
+crime <- read.csv("data_input/crime.csv")
+crime <- crime %>% 
+  select(-X) %>% 
+  setNames(c("percent_m", "is_south", "mean_education", "police_exp60", 
+             "police_exp59", "labour_participation", "m_per1000f", "state_pop", 
+             "nonwhites_per1000", "unemploy_m24", "unemploy_m39", "gdp", "inequality", 
+             "prob_prison", "time_prison", "crime_rate"))
+
+str(crime)
+```
+
+Data Description:
+
+- `percent_m`: percentage of males aged 14-24 
+- `is_south`: whether it is in a Southern state. 1 for Yes, 0 for No.
+- `mean_education`: mean years of schooling
+- `police_exp60`: police expenditure in 1960
+- `police_exp59`: police expenditure in 1959 
+- `labour_participation`: labour force participation rate
+- `m_per1000f`: number of males per 1000 females
+- `state_pop`: state population
+- `nonwhites_per1000`: number of non-whites resident per 1000 people
+- `unemploy_m24`: unemployment rate of urban males aged 14-24
+- `unemploy_m39`: unemployment rate of urban males aged 35-39
+- `gdp`: gross domestic product per head
+- `inequality`: income inequality
+- `prob_prison`: probability of imprisonment
+- `time_prison`: avg time served in prisons
+- `crime_rate`: crime rate in an unspecified category Produce a linear model
+
+```{r}
+# Buat model regresi untuk prediksi inequality dengan semua prediktor
+
+
+# Melakukan pemilihan variabel dengan stepwise backward
+
+```
+## Linearity
+
+**Dilakukan sebelum membuat model**. Untuk menguji apakah variabel target dan prediktor memiliki hubungan linear. Dapat dilihat dengan nilai korelasi menggunakan function `ggcorr()` atau dapat menggunakan uji statistik `cor.test()`. (ingin mendapatkan p-value < alpha agar tolak $H_0$)
+
+Linearity artinya target variabel dengan prediktornya memiliki hubungan yang linear atau hubungannya bersifat garis lurus. Selain itu, efek atau nilai koefisien antar variabel bersifat additive. Jika linearity ini tidak terpenuhi, maka otomatis semua nilai koefisien yang kita dapatkan tidak valid karena model berasumsi bahwa pola yang akan kita buat adalah linear.
+
+Linearity hypothesis test: 
+
+$$
+H_0: korelasi\ tidak\ signifikan\\
+H_1: korelasi\ signifikan
+$$
+```{r}
+
+```
+
+
+Melakukan pengecekan asumsi linearity menggunakan correlation test (`cor.test()`)
+```{r}
+
+```
+
+Cara handling untuk case asumsi linearity, ketika ada variable prediktor yang tidak linear terhadap target variable :
+
+1. bisa di take out dari pemodelan 
+2. bisa ganti model dengan tipe regresi yang lain
+
+## Normality of Residual (Residual Normal) 
+
+Harapannya ketika membuat model linear regression, error yang dihasilkan berdistribusi normal. Artinya error banyak berkumpul disekitar angka 0. Untuk menguji asumsi ini dapat dilakukan:
+
+1. Visualisasi histogram residual, dengan menggunakan fungsi `hist()`.
+```{r}
+
+```
+
+
+2. Uji statistik menggunakan `shapiro.test()`. (harapannya pvalue > alpha agar keputusan yang diambil adalah gagal tolak H0)
+
+
+Shapiro-Wilk hypothesis test:
+
+$$
+H_0: error/residual\ berdistribusi\ normal\\
+H_1: error/residual\ tidak\ berdistribusi\ normal
+$$
+
+```{r}
+
+```
+
+**Kesimpulan:** 
+
+Jika asumsi normalitas tidak terpenuhi, maka hasil uji signifikansi serta nilai standard error dari intercept dan slope setiap prediktor yang dihasilkan bersifat bias atau tidak mencerminkan nilai sebenarnya. Jika residual memiliki distribusi yang tidak normal, bisa **lakukan transformasi data pada target variabel** atau **menambahkan sample data**.
+
+Transformasi data :
+
+* min-max transformation
+* z-score standarization (`scale()`)
+```{r}
+iris %>% 
+  dplyr::select(Sepal.Length) %>% 
+  scale()
+```
+
+
+## Homoscedasticity of Residual
+
+Homocesdasticity menunjukkan bahwa residual atau error bersifat konstan atau tidak membentuk pola tertentu. Jika error membentuk pola tertentu seperti garis linear atau mengerucut, maka kita sebut dengan `Heterocesdasticity` dan akan berpengaruh pada nilai standard error pada estimate/koefisien prediktor yan bias (terlalu sempit atau terlalu lebar).
+
+Homocesdasticity bisa dicek secara visual dengan melihat apakah ada pola antara hasil prediksi dari data dengan nilai residualnya. Pada plot berikut terlihat bahwa tidak terdapat pola tertentu sehingga kita bisa menyimpulkan bahwa model sudah memiliki error yang konstan.
+
+Berikut adalah beberapa pola yang dapat terbentuk dan menyebabkan `Heteroscesdasticity`.
+
+```{r echo=FALSE}
+knitr::include_graphics("assets/heteroscedasticity.png")
+```
+
+Untuk menguji asumsi ini dapat dilakukan:
+
+1. Visualisasi dengan scatterplot antara nilai prediksi(fitted values) dengan nilai error
+
+```{r}
+
+```
+
+2. Uji statistika dengan Breusch-Pagan dari package `lmtest`
+
+Breusch-Pagan hypothesis test: (harapannya p-value > alpha agar gagal tolak H0)
+
+$$
+H_0: Variansi\ error\ menyebar\ konstan\ (Homoscedasticity)\\
+H_1: Variansi\ error\ menyebar\ tidak\ konstan\ membentuk\ pola\ (Heteroscedasticity)
+$$
+
+```{r}
+library(lmtest)
+
+```
+
+Kesimpulan: Asumsi homoskedasticity terpenuhi pada model_backward dengan p-value > alpha. Artinya eror yang kita miliki menyebar secara acak dan konstan.
+
+Handling asumsi homoscedasticity yang tidak terpenuhi yaitu dengan melakukan **transformasi pada variabel prediktor**.
+
+## No Multicolinearity
+
+Harapannya pada model linear regression, tidak terjadi multikolinearitas. Multikolinearitas terjadi ketika antar variabel prediktor yang digunakan pada model memiliki hubungan yang kuat. Ada atau tidak multikolinearitas dapat dilihat dari nilai VIF(Variance Inflation Factor):
+
+Ketika nilai VIF lebih dari 10 artinya terjadi multikolinearitas. Harapannya mendapatkan VIF < 10
+```{r}
+library(car)
+
+```
+
+> Apabila memiliki model yang terindikasi multiko dimana terdapat prediktor yang memiliki vif > 10, maka kita bisa membuat model kembali **menggunakan salah satu prediktor** yang terindikasi multiko atau **tidak menggunakan prediktor-prediktor** tersebut atau **melakukan feature engineering** dengan membuat variabel baru yang berisi rata-rata dari kedua variabel yang terindikasi multiko.
+
+```{r}
+
+```
+
+**TIPS!**
+
+```{r}
+# install.packages("performance")
+library(performance)
+# asumsi multikolinearity
+
+```
+
+```{r}
+# asumsi normality
+
+```
+```{r}
+# asumsi homoscedastocity
+
+```
+
+```{r}
+# untuk cek seluruh asumsi linear regression
+
+```
+
+
+# Model Evaluation
+
+Tujuan dari suatu pemodelan prediktif adalah melakukan prediksi untuk data yang belum dimiliki. Setelah melakukan prediksi dari data, kita harus mengetahui apakah model machine learning yang sudah dibuat dapat menghasilkan prediksi dengan error yang paling kecil. Untuk melakukan model evaluation pada regression model ada beberapa cara :
+
+* menggunakan nilai R-Squared dan Adj R-Squared
+  * untuk menentukan seberapa baik model dalam menjelaskan variansi dari target variabel
+* menggunakan nilai error
+  * untuk melihat apakah prediksi yang dibuat menghasilkan nilai error terkecil
+  
+Beberapa nilai error yang ada :
+
+* Sum of Squared Error (SSE)
+* Mean Squared Error (MSE)
+* Root Mean Squared Error (RMSE) 
+* Mean Absolute Error (MAE)
+* Mean Absolute Percentage Error (MAPE)
+
+## Error/Residual
+
+Error/residual adalah selisih antara hasil prediksi dengan nilai aktual.
+
+$$
+Error/residual = prediction - actual = \hat y - y
+$$
+
+Menghitung error manual
+
+```{r}
+#menghitung error manual
+
+```
+
+## Mean Absolute Error
+
+Mean Absolute Error (MAE) menunjukkan rata-rata dari nilai absolut error. MAE bisa diinterpretasikan sebagai seberapa besar penyimpangan hasil prediksi terhadap nilai aktualnya.
+
+$$
+MAE = \frac{\sum |\hat y - y|}{n}
+$$
+
+```{r}
+
+```
+MAE 9.7 menunjukkan bahwa model kita secara rata-rata hasil prediksinya akan menyimpang sebesar nilai MAE tersebut (9.7) (baik positif maupun negatif). 
+
+## Mean Absolute Percentage Error (MAPE)
+
+MAPE menunjukkan seberapa besar penyimpangannya dalam bentuk persentase.
+
+$$
+MAPE = \frac{1}{n} \sum\frac{|\hat y - y|}{y} 
+$$
+
+```{r}
+# install.packages("MLmetrics")
+library(MLmetrics)
+
+```
+> MAPE range nya dalam persen, semakin kecil nilai MAPE, semakin bagus model yang kita miliki.
+
+MAPE artinya model kita secara rata-rata menyimpang sebesar nilai MAPE dari nilai aktualnya. MAE dan MAPE adalah metrik yang baik untuk interpretasi karena mudah dipahami. 
+
+## Mean Squared Error (MSE)
+
+MSE menghitung berapa selisih kuadrat dari hasil prediksinya kemudian dirata-rata. MSE sensitif terhadap perubahan atau selisih hasil prediksi yang besar sehingga meskipun sulit diinterpretasikan tetapi menjadi lebih baik dalam mendeteksi selisih yang besar. 
+
+$$
+MSE = \frac{1}{n} \sum (\hat y - y)^2
+$$
+
+```{r}
+
+```
+
+## Root Mean Squared Error (RMSE)
+
+RMSE adalah bentuk akar kuadrat dari MSE. Karena sudah diakarkan, maka interpretasinya kurang lebih sama dengan MAE. RMSE dapat digunakan jika kita lebih concern dengan error yang sangat besar.
+
+$$
+RMSE = \sqrt{\frac{1}{n} \sum (\hat y - y)^2}
+$$
+
+```{r}
+
+```
+
+Perbedaan MAE dengan RMSE, RMSE sensitive terhadap error yang cukup besar/kecil.
+```{r echo=FALSE}
+knitr::include_graphics("assets/mae-vs-rmse.png")
+```
+
+# Workflow Pembuatan Model Linear Regression
+
+1. Import data
+2. Cleansing data
+
+- cek missing value
+- cek outlier
+- melakukan transformasi data
+3. Exploratory data analysis
+
+- cek korelasi antar target dan prediktor
+4. Splitting data menjadi train dan test
+5. Modeling menggunakan data train
+
+- cek R-squared/Adjusted R-squared
+- cek nilai p-value pada model (signifikansi prediktor yang digunakan)
+- feature selection menggunakan stepwise
+- interpretasi model
+6. Uji asumsi
+
+- linearity
+- normality of residuals
+- homoscedasticity of residuals
+- no multikolinearity
+7. Prediksi menggunakan data test (`predict()`)
+8. Model evaluation menggunakan nilai error
+
+
+<center> **--- End of Day 3 ---** </center>
+
+
+# Referensi
+
+1. [Regression Model](https://seeing-theory.brown.edu/regression-analysis/index.html#section1)
+2. [Interval in Predict](http://www.sthda.com/english/articles/40-regression-analysis/166-predict-in-r-model-predictions-and-confidence-intervals/)
+3. [Metric Evaluation for Regression Model](https://towardsdatascience.com/what-are-the-best-metrics-to-evaluate-your-regression-model-418ca481755b)
+4. [Greedy Algorithm](https://brilliant.org/wiki/greedy-algorithm/#:~:text=A%20greedy%20algorithm%20is%20a,to%20solve%20the%20entire%20problem)
+5. [Ordinary Least Square (OLS)](https://setosa.io/ev/ordinary-least-squares-regression/)
+6. [Regression Random Forest](http://zevross.com/blog/2017/09/19/predictive-modeling-and-machine-learning-in-r-with-the-caret-package/)

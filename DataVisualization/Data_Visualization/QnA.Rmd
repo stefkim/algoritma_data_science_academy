@@ -1,0 +1,136 @@
+---
+title: "30 min QnA"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Day 1
+
+```{r}
+# dummy data
+data1 <- data.frame(video_title = c("Morning News", "30S Update", "Lost Civilization", "Civil War", "Weekly Updates"),
+                   channel = c("BBC", "BBC", "National Geographic", "National Geographic", "BuzzFeed"),
+                   tanggal = c("2021/03/22, 1:42PM", "2021/03/23, 1:45PM", "2021/03/24, 1:50PM", "2021/03/24, 1:50PM", 
+                               "2021/03/24, 1:50PM"),
+                   category = c(1,1,2,2,4)
+                   )
+data1
+```
+
+```{r}
+# dummy data 2
+data2 <- data.frame(category = c(1,2,3,4),
+                    category_label = c("News", "Education", "Blog", "Entertainment"))
+data2
+```
+
+1. Cara mengubah date time ke tipe AM/PM?
+
+* setiap data date yang ingin diolah perlu diubah dulu ke tipe standard date (YY-MM-DD/YY-MM-DD HH:MM:SS (24h format))
+```{r}
+# chr -> date-time (POSIXct)
+data1$tanggal <- lubridate::ymd_hm(data1$tanggal)
+# cek data
+data1[1,] 
+```
+
+```{r}
+# POSIXCt -> AM/PM format (chr)
+# buat fungsi
+strftime_newton <- function(x) {
+  
+  strftime(x, 
+           format = "%A, %d %b %Y %l:%M %p", 
+           tz = "GMT")  
+
+  }
+# apply fungsi dengan sapply (karena fungsinya hanya menerima 1 value)
+data1$tanggal_12format <- sapply(data1$tanggal, strftime_newton)
+data1
+```
+
+2. Fungsi lain untuk mengganti label selain switch?
+
+```{r message=FALSE, warning=FALSE}
+# case_when() from dplyr package
+# == bisa diganti <= / >= / %in%
+library(dplyr)
+data1$category <- case_when(data1$category == 1 ~ "News",
+                            data1$category == 2 ~ "Education",
+                            data1$category == 3 ~ "Blog",
+                            data1$category == 4 ~ "Entertainment")
+data1
+```
+
+3. Mengganti label (seperti switch) tapi mengambil dari table (kolom key)?
+
+```{r}
+# join functions from dplyr package
+# masukkan kolom dari data y ke x berdasarkan nilai yang match dari kolom "category"
+left_join(x = data1, y = data2, by = "category")
+```
+
+4. Ingin mengambil data unique yang terakhir kali muncul?
+
+```{r}
+data1 %>% 
+  group_by(channel) %>% 
+  slice_tail(n = 1)
+```
+
+5. mengambil data unique dengan syarat 2-3 kolom yang unique?
+
+Contoh: mengambil nilai unique dari tiap `channel` dan `tanggal`
+```{r}
+distinct(.data = data1, # data
+         channel, tanggal, # kolom yang dipertimbangkan nilai unique nya 
+         .keep_all = T) # mengembalikan seluruh kolom
+```
+
+# Day 2
+
+Kasus data wrangling untuk data *string* amat bergantung pada pattern yang ada.
+
+1. Cara mengambil informasi tertentu (angka) dari satu kolom karakter sebagai berikut?
+
+```{r}
+# dummy data
+data3 <- data.frame(product_name = c("Compressive Strength 250 . (K250) FA", 
+                                  "Compressive Strength 250 . (K250)", 
+                                  "Compressive Strength K350 .NFA",
+                                  "Compresive strength 30 Mpa. (FC30)"))
+data3
+```
+```{r}
+library(dplyr) # untuk data wrangling
+library(tidyr) # untuk data wrangling
+library(stringr) # untuk olah data string/character
+data3 %>% 
+  mutate(product_name_olah = str_to_lower(product_name)) %>% # mengubah jadi lowercase
+  mutate(value1 = str_remove_all(product_name_olah, pattern = "[:alpha:]"), # membuang pattern berupa huruf
+         value2 = str_remove(value1, pattern = "\\..*")) # membuang pattern "." dan setelahnya
+```
+
+2. Cara mengambil informasi tertentu (character) dari satu kolom karakter sebagai berikut?
+
+Contoh menggunakan fungsi `separate()` dari package tidyr:
+
+```{r}
+# dummy data
+data3 <- data.frame(site_name = c("DO 145/APARTEMEN TOKYO RIVERSIDE PIK 2", 
+                                  "DO 145 FC45/APARTEMEN TOKYO RIVERSIDE PIK 2", 
+                                  "DO 143/APARTEMEN OSAKA RIVERSIDE PIK 2"))
+```
+
+```{r}
+tidyr::separate(data3, 
+                site_name, 
+                sep = "/", # separator 
+                into = c("value1", "value2")) # nama kolom setelah pemisahan, sejumlah perkiraan kolom hasil pemisahan
+```
+
+
+

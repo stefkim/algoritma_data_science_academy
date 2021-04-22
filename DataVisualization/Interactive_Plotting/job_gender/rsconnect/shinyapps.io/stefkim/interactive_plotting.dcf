@@ -1,0 +1,13 @@
+name: interactive_plotting
+title: interactive_plotting
+username:
+account: stefkim
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 3896137
+bundleId: 4419510
+url: https://stefkim.shinyapps.io/interactive_plotting/
+when: 1617264332.35195
+asMultiple: FALSE
+asStatic: FALSE
+ignoredFiles: sketsa.Rmd

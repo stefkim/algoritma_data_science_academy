@@ -1,0 +1,625 @@
+---
+title: 'IP : In-class materials'
+author: "David"
+date: "`r format(Sys.Date(), '%B %e, %Y')`"
+output:
+  html_document:
+    df_print: paged #default,kable, tibble, paged
+    highlight: tango
+    theme: cosmo
+    toc: yes
+    toc_depth: 2
+    toc_float:
+      collapsed: yes
+  word_document:
+    toc: yes
+---
+
+Menyiapkan markdown document
+```{r setup, include=FALSE}
+# clear-up the environment
+rm(list = ls())
+
+# chunk options
+knitr::opts_chunk$set(
+  message = FALSE,
+  warning = FALSE,
+  fig.align = "center",
+  comment = "#>"
+)
+
+# scientific notation
+options(scipen = 9999)
+```
+
+# Data Wrangling
+
+Pada eksplorasi kali ini, akan digunakan satu package bernama [tidyverse](https://www.tidyverse.org/), yang mengusung konsep tidy dalam transformasi data. Adapun di dalam `tidyverse`, terdapat package-package yang umum digunakan untuk transformasi data, yakni `ggplot2`, `dplyr`, `tidyr`, `readr`, `purrr`, `tibble`, `stringr`, dan `forcats`.
+
+```{r}
+library(tidyverse) # kalau blm beres bisa install dplyr saja dulu
+library(ggpubr)
+library(scales)
+library(glue)
+library(plotly)
+```
+
+Kali ini, kita akan menggunakan dataset dari [#tidytuesday](https://github.com/rfordatascience/tidytuesday/tree/master/data/2019/2019-03-05), yakni "Women in the workplace" dari biro statistik tenaga kerja dan biro sensus.
+
+```{r}
+workers <- read.csv("data_input/jobs_gender.csv")
+head(workers)
+```
+
+Deskripsi variabel:
+- `year`: Tahun
+- `occupation`: Posisi/pekerjaan tertentu 
+- `major_category`: Departemen/divisi
+- `minor_category`: Sub-departemen/sub-divisi
+- `total_workers`: Total pekerja (full time, di atas 16 tahun)
+- `workers_male`: Total pekerja pria (full time, di atas 16 tahun)
+- `workers_female`: Total pekerja wanita (full time, di atas 16 tahun)
+- `percent_female`: Persentasi (proporsi) pekerja wanita untuk setiap posisi/pekerjaan tertentu
+- `total_earnings`: Median pendapatan setiap pekerja (full time, di atas 16 tahun)
+- `total_earnings_male`: Median pendapatan setiap pekerja pria (full time, di atas 16 tahun)
+- `total_earnings_female`: Median pendapatan setiap pekerja wanita (full time, di atas 16 tahun)
+- `wage_percent_of_male`: Rasio persentase pendapatan wanita dengan pria, bernilai NA untuk posisi/pekerjaan yang ukuran sampelnya kecil. 
+
+## Package dplyr
+
+Package dplyr menyediakan beberapa fungsi yang dapat mempermudah cleaning data yaitu:
+
+## Filtering for rows using `filter()`
+
+Misal kita hanya ingin menampilkan data tahun 2014
+
+```{r}
+# base R
+workers[workers$year == 2014,]
+```
+
+```{r}
+# dplyr
+library(dplyr)
+filter(.data = workers, year == 2014)
+```
+
+## Selecting specific column using `select()`
+
+
+ambil kolom year, occupation, total_workers dari data workers
+
+```{r}
+# base R
+workers[,c("year","occupation","total_workers")]
+```
+
+```{r}
+# dplyr
+select(.data = workers, year, occupation, total_workers)
+```
+
+## Mutating new column using `mutate()`
+
+untuk membuat atau memodifikasi kolom yang ada
+```{r}
+# base R
+workers$occupation <- as.factor(workers$occupation)
+workers
+```
+
+
+```{r}
+#dplyr
+mutate(.data = workers, 
+       occupation = as.factor(occupation))
+
+mutate(.data = workers, occupation = as.factor(occupation))
+```
+
+
+filter() : ambil baris
+select() : ambil kolom
+mutate() : membuat/ memodifikasi kolom
+
+
+```{r}
+filter(.data = workers, year == 2014)
+```
+
+
+## Pipe operator `%>%`
+
+Shortcut pipes `ctrl+shift+m`
+
+Compile semua function diatas
+
+ambil data workers pada tahun 2014 dan kolom year, occupation, total_workers
+
+
+```{r}
+# f(x, y)
+workers %>% 
+  filter(year == 2014) %>% 
+  select(occupation, total_workers, year) %>% 
+  mutate(occupation = as.factor(occupation))
+
+```
+
+
+select year, occupation, total_workers from workers where year == 2014
+
+
+
+**Dive Deeper* 3 - 5 menit
+
+lakukan praproses data pada data `workers` sebagai berikut dengan menggunakan `dplyr`
+1. ambil data yang memilki `minor_category` Management dan pada tahun 2013 (filter)
+2. ambil kolom occupation, year, workers_male, workers_female
+3. Ubah year menjadi factor
+
+
+& == ,
+|
+
+
+```{r}
+# Code here
+# Mas Stefanus, Pak Wayan
+workers %>% 
+  filter(minor_category == "Management", year == 2013) %>% 
+  select(occupation, year, workers_male, workers_female) %>% 
+  mutate(year = as.factor(year)) 
+
+# Mas Calvin, Mba Ani
+workers %>% 
+  filter(minor_category == "Management" & year == 2013) %>% 
+  select(year, occupation, workers_male, workers_female) %>%
+  mutate(year = as.factor(year))
+
+
+```
+
+
+berapa proporsi untuk setiap major_category
+
+```{r}
+# dijalankan dari dalam keluar
+prop.table(table(workers$major_category))
+
+# dijalankan dari atas ke bawah 
+workers$major_category %>% 
+  table() %>% 
+  prop.table()
+
+```
+
+
+Pak Janu (data): 
+
+function
+megang_hp
+sepedaan
+mandi
+ngoding
+sarapan
+
+
+dplyr
+pak_janu %>% 
+megang_hp() %>% 
+sepedaan() %>% 
+mandi() %>% 
+ngoding %>% 
+sarapan()
+
+
+base
+sarapan(ngoding(mandi(sepedaan(megang_hp(pak_janu)))))
+
+
+## Grouping/aggregate the data using `group_by()`and `summarise()`
+
+```{r}
+workers
+```
+
+Rata-rata pendapatan (total_earnings) yang diperoleh untuk setiap `major_category`. Urutkan data dari nilai rata2 terbesar
+
+
+```{r}
+temp <- aggregate(total_earnings~major_category, data = workers, FUN = mean)
+temp[order(temp$total_earnings, decreasing = T),]
+```
+
+```{r}
+workers %>% 
+  group_by(major_category, year) %>%
+  summarise(mean_earn = mean(total_earnings)) %>% 
+  arrange(year, -mean_earn) # tanda - untuk mengurutkan dari besar ke kecil ; atau function desc()
+
+```
+
+Kinds of statistics summary:
+
+- `mean()` mean of specific column   
+- `median()` median of specific column   
+- `sum()` sum of specific column   
+- `n()` nrow of the column   
+- `sd()` standard deviation of the column  
+- `min()`
+- `max()`
+
+**Dive Deeper** 3 - 5 menit
+
+Ambil niai `maksimum` dari `total_earnings` untuk setiap major category di tahun 2013. Urutkan dari yang terbesar hingga ke yang terkecil.
+
+filter
+
+secara hasil sama, tapi yang lebih tepat adalah filter terlebih dahulu.
+
+```{r}
+# Mas Dicky, Pak Wayan, Mba Eldora, Pak Janu, Mba Ani
+workers %>% 
+  group_by(major_category) %>% 
+  filter(year==2013) %>% 
+  summarise(max_earn=max(total_earnings)) %>% 
+  arrange(-max_earn)
+
+# Mba Ika, Mas Stefanus
+workers %>% 
+  filter(year == 2013) %>% 
+  group_by(major_category) %>%
+  summarise(maximum = max(total_earnings)) %>% 
+  arrange(-maximum) 
+```
+
+
+## Ungroup
+
+untuk melepas sifat grouping dari group_by
+
+Tampilkan 3 major category dan minor category dengan pekerja perempuan terbanyak
+
+```{r}
+workers %>% 
+  group_by(major_category, minor_category) %>% 
+  summarise(total_female = sum(workers_female)) %>% 
+  arrange(-total_female)  %>% 
+  ungroup() %>% 
+  top_n(3)
+```
+
+Tanpa menggunakan ungroup
+```{r}
+workers %>% 
+  group_by(major_category, minor_category) %>% 
+  summarise(total_female = sum(workers_female)) %>% 
+  arrange(-total_female)  %>% 
+  top_n(2)
+```
+
+`ungroup()` berfungsi untuk melepas grouping yang dilakukan, supaya tidak berpengaruh terhadap fungsi yang dilakukan selanjutnya. Seperti kedua output di atas terlihat bahwa jika tidak dilakukan `ungroup()` maka fungsi yang dilakukan selanjutnya dilakukan untuk setiap group.
+
+## Check missing value
+
+
+```{r}
+workers
+```
+
+1. type
+```{r}
+str(workers)
+```
+
+
+```{r}
+workers_clean <- workers %>% 
+  mutate(occupation = as.factor(occupation), 
+         major_category = as.factor(major_category), 
+         minor_category = as.factor(minor_category))
+str(workers_clean)
+```
+
+
+```{r}
+anyNA(workers_clean) # ada missing value pada data.
+```
+
+dimana data NA?
+```{r}
+workers_clean %>% 
+  is.na() %>% 
+  colSums()/nrow(workers_clean) # 
+```
+
+### Handling missing value
+- Full analysis, Jika jumlah missing value < 5% dari jumlah observasi, kita dapat membuang observasi tersebut
+
+- Imputation, mengisikan nilai NA dengan suatu nilai misal nilai mean, median, modus, dll sesuai dengan pertimbangan bisnis
+
+- Deletion, membuang variabel yang mengandung banyak sekali NA
+
+### Drop NA
+
+Kita akan membuang observasi yang mengandung NA pada kolom total_earnings_female dan total_earnings_male
+
+```{r}
+workers_clean <- workers_clean %>% 
+  drop_na(total_earnings_male, total_earnings_female)
+```
+
+Cek kembali missing value pada data
+```{r}
+workers_clean %>%
+  is.na() %>% 
+  colSums()
+```
+
+```{r}
+workers_clean <- workers_clean %>% 
+  select(-wage_percent_of_male) # tanda - berarti buang kolom tersebut
+```
+
+ingin dilakukan imputasi pada data yang missing
+```{r}
+workers_clean %>% 
+  mutate(total_earnings_male = ifelse(is.na(total_earnings_male), # kondisi
+                                      mean(total_earnings_male),  # true
+                                      total_earnings_male))# false
+
+```
+
+# Business Question
+
+1. Bagaimana perbedaan *rata rata* gap earnings antara male dan female untuk tiap major kategori di tahun 2016?
+2. Berapa jumlah pekerjaan yang didominasi oleh wanita pada setiap major category di tahun 2015?
+3. Bagaimana perbandingan distribusi pendapatan pegawai berdasarkan gender pada tahun 2016?
+
+## Case 1
+
+Dari dataset yang ada, kita akan ingin melihat berapa gap earnings antara male dan female *untuk tiap major kategori* untuk tahun 2016.
+
+- **Step 1** Siapkan data visualisasi
+
+1. hanya mengambil observasi di tahun 2016
+2. membuat kolom baru yaitu gap_earnings = total_earnings_male - total_earnings_female
+3. grouping major category dan mendapatkan rata-rata dari gap earnings
+
+```{r}
+workers_agg1 <- workers_clean %>% 
+  filter(year == 2016) %>% # ambil data tahun 2016
+  mutate(gap_earnings = total_earnings_male - total_earnings_female) %>%  # buat kolom baru gap_earnings
+  group_by(major_category) %>%  # mengelompokkan data berdasarkan major category
+  summarise(avg_earnings = mean(gap_earnings)) %>%  # menghitung rata2 gap_earnings
+  ungroup() %>% 
+  arrange(avg_earnings)
+workers_agg1
+```
+
+- **Step 2** Lakukan visualisasi
+
+Jenis visualisasi apa yang cocok dengan data diatas?
+- [ ] Distribusi  
+- [X] Rangking
+- [ ] keterhubungan (correlation)
+
+
+
+```{r fig.width=10}
+plot_earnings <-  ggplot(data = workers_agg1, mapping = aes(y = reorder(major_category, avg_earnings), x = avg_earnings)) +
+geom_col(aes(fill = major_category) ) +
+  labs(title = "Average Gap Earnings in 2016", 
+       y = "Major Category", 
+       x = NULL) +
+  theme_minimal() +
+  scale_fill_brewer(palette = "Set2") + 
+  theme(legend.position = "none")
+plot_earnings
+```
+
+- **Step 3** Membuat plot menjadi interactive
+```{r}
+library(plotly)
+ggplotly(plot_earnings)
+```
+
+
+== End of Day 1 == 
+dplyr:
+- filter: mengambil baris
+- select: mengambil kolom
+- mutate: menambah kolom baru/memodifikasi kolom yang sudah ada
+- group_by: mengelompokkan data
+- summarize: menghitung summary statistik dari data
+- arrange: mengurutkan data sesuai/berdasarkan kolom tertentu
+- ungroup: untuk melepas sifat grouping dari group_by
+
+**Dive Deeper** 10 - 15 menit
+
+## Case 2
+
+Jumlah Pekerjaan yang *didominasi oleh wanita* pada setiap `major category` di tahun 2015
+
+**Step 1** Siapkan data untuk visualisasi
+
+```{r klik_for_HINT, eval=FALSE}
+# 1. Ambil data pada tahun 2015
+# 2. Jumlah pekerja didominasi oleh wanita (worker_female > worker_male)
+# 3. kelompokkan data berdasarkan major_category
+# 4. hitung frekuensi menggunakan fungsi n()
+```
+
+```{r}
+# Mba Josephine
+data_agg2 <- workers_clean %>%
+  filter(year == 2015) %>% 
+  mutate(dominate = workers_female > workers_male) %>% 
+  group_by(major_category) %>% 
+  filter(dominate == T) %>% 
+  summarise(frequency = n()) %>% 
+  arrange(-frequency) 
+
+# David
+data_agg2 <- workers_clean %>%
+  filter(year == 2015, workers_female > workers_male) %>% 
+  group_by(major_category) %>% 
+  summarise(frequency = n()) %>% 
+  arrange(-frequency) 
+
+```
+
+- **Step 2** Lakukan visualisasi
+```{r}
+library(glue)
+plot_wanita <- ggplot(data_agg2, aes(y = reorder(major_category, frequency), 
+                                     x = frequency, 
+                                     text = glue("Jumlah Pekerjaan: {frequency}")
+                                     )
+                      ) +
+  geom_segment(aes(xend = 0, yend = major_category)) +
+  geom_point( color="firebrick4", size=3) +
+  theme_minimal() +
+  labs(title = "Pekerjaan Yang Didominasi Oleh Wanita", 
+       y = "Kategori Utama", 
+       x = "Jumlah Pekerjaan") 
+plot_wanita
+```
+
+- **Step 3** Membuat plot menjadi interactive
+
+secara default tooltip akan menampilkan semua informasi yang ada pada aes()
+
+```{r}
+ggplotly(plot_wanita, tooltip = "text") %>% 
+  config(displayModeBar = F)
+```
+## Case 3 (long wide data)
+
+Distribusi Pendapatan Pegawai Berdasarkan Gender pada Tahun 2016
+
+1. filter tahun 2016
+2. select minimal 2 kolom total_earnings
+
+```{r}
+workers_df_density <- workers_clean %>% 
+  filter(year == 2016) %>% 
+  select(occupation, total_earnings_male, total_earnings_female) %>%
+  pivot_longer(cols = -occupation,
+               names_prefix = "total_earnings_", 
+               names_to = "gender", 
+               values_to = "total_earnings")
+```
+
+hist
+
+boxplot
+
+density
+
+sumbu y
+hist : freq
+density : probability
+
+```{r}
+workers_df_density %>% 
+  ggplot(aes(x = total_earnings, fill = gender)) +
+  geom_density()
+```
+
+
+
+
+```{r}
+library(scales)
+
+plot_density <- workers_df_density %>% 
+  mutate(gender = factor(gender, levels = c("male", "female"))) %>% 
+  ggplot(aes(x = total_earnings, fill = gender)) +
+  geom_density(alpha = 0.95, ) +
+  scale_fill_brewer(palette = "Set1") +
+  labs(title = "Distribusi Pendapatan Pegawai Berdasarkan Gender Tahun 2016", 
+       x = NULL, 
+       y = NULL, 
+       fill = NULL) +
+  scale_x_continuous(labels = dollar_format()) +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5), 
+        panel.grid.minor = element_blank(),
+        panel.grid.major.x = element_blank())
+plot_density
+```
+
+
+```{r}
+ggplotly(plot_density, tooltip = "x") %>% 
+  config(displayModeBar = F)
+```
+
+# Communicate
+
+## Static Plot
+```{r}
+library(ggpubr)
+```
+
+mengatur urutan plot dengan `ggarrange()`
+```{r fig.height=12}
+ggarrange(plot_wanita, plot_density, plot_earnings, ncol = 1) %>% 
+  ggexport(filename = "Report Job Gender.png", width = 600, height = 800)
+```
+
+Exporting plot ke dalam format .png, .jpg, atau .pdf menggunakan ggexport
+
+## Interactive plot
+
+### Subplot
+
+```{r}
+subplot(plot_wanita, plot_density, plot_earnings, nrows = 3) %>% 
+  config(displayModeBar = F)
+```
+
+Flexdashboard :
+  - orientation : columns/rows
+  - vertical_layout  : fill/scroll
+  
+export static plot :
+- ggexport
+
+plotly: 
+ - tooltip : menampilkan nilai yang ada dalam aes
+- custome tooltip menggunakan glue
+
+
+
+
+
+
+### Flexdashboard
+
+```{r}
+# install.packages("flexdashboard")
+```
+
+# External link for reference
+
+- [Tidyverse](https://www.tidyverse.org/)
+- [Cheatsheets: data wrangling with dplyr](https://rstudio.com/wp-content/uploads/2015/02/data-wrangling-cheatsheet.pdf)
+- [Plotly Configuration](https://plot.ly/r/configuration-options/)
+- [Flexdashboard](https://rmarkdown.rstudio.com/flexdashboard/index.html)
+- [Cheatsheets: shiny](https://shiny.rstudio.com/images/shiny-cheatsheet.pdf)
+- [Shiny dashboard](https://rstudio.github.io/shinydashboard/)
+- [Tidyexplain](https://www.garrickadenbuie.com/project/tidyexplain/)
+- [Regular Expression](https://github.com/tiaradwiputri/regex-thebasics)
+
+Customize your Dashboard Appearance:
+You can also customize your dashboard appearance, such as adding icons, skins, etc.
+
+https://rstudio.github.io/shinydashboard/appearance
+
+Besides, if you want to explore more about shiny dashboard structure https://rstudio.github.io/shinydashboard/structure.html
+
+
+

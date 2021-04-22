@@ -1,0 +1,1281 @@
+---
+title: 'Data Visualization : In-class Materials'
+author: "Nabiilah Ardini Fauziyyah"
+date: "`r format(Sys.Date(), '%B %e, %Y')`"
+output:
+  html_document:
+    theme: cosmo
+    highlight: tango
+    toc: true
+    toc_float:
+      collapsed: false
+    df_print: paged
+---
+
+```{r setup, include=FALSE}
+# clear-up the environment
+rm(list = ls())
+
+# chunk options
+knitr::opts_chunk$set(
+  message = FALSE,
+  warning = FALSE,
+  fig.align = "center",
+  comment = "#>"
+)
+
+options(scipen = 9999)
+```
+
+# The Flow
+
+1. Start with Business Question
+2. Prepare the data
+3. Visualize your data
+
+# The State of Trending Videos
+
+Kita adalah seorang *YouTuber* yang ingin meningkatkan pamor dari channel YouTube kita. Kita berencana untuk membuat konten video yang dapat menjadi trending sehingga dapat meningkatkan popularitas channel. Hari ini, Kita baru saja mendapatkan data **YouTube's US Trending Videos** dan akhirnya ingin mencari tahu, **apa saja yang membuat suatu video menjadi trending**?
+
+## Read Data
+
+```{r}
+vids <- read.csv("USvideos.csv")
+```
+
+cek data:
+```{r}
+head(vids)
+```
+
+YouTube's US Trending Videos adalah kumpulan 200 video trending di US per harinya sejak 2017-11-14 hingga 2018-01-21. Berikut adalah deskripsi kolomnya:
+
+* **trending_date**: tanggal trending
+* **title**: judul video
+* **channel_title**: nama channel Youtube
+* **category_id**: kategori video
+* **publish_time**: tanggal upload video
+* **views**: jumlah views
+* **likes**: jumlah likes
+* **dislikes**: jumlah dislikes
+* **comment_count**: jumlah komentar
+* **comment_disabled**: apakah kolom komentar tidak diaktifkan
+* **rating_disabled**: apakah rating video tidak diaktifkan
+* **video_error_or_removed**: apakah video dihapus
+
+Eksplor data anda! Apakah tiap kolom sudah memiliki tipe data yang tepat?
+
+1. trending_date, publish_time -> date
+2. category_id -> factor berisi label kategori seharusnya
+
+## Data Wrangling
+
+Data wrangling adalah istilah lain dari **data cleaning**. Beberapa contohnya telah kita pelajari di kelas *Programming for Data Science*, seperti mengubah tipe data dan subsetting baris/kolom tertentu.
+
+### `lubridate`
+
+**lubridate** adalah package yang sangat powerful untuk mengolah data waktu dan tanggal. 
+
+Sebelumnya kita mengubah data ke tipe date dengan menggunakan `as.Date()`:
+
+YEAR  
+%Y = YYYY  
+%y = YY   
+  
+MONTH  
+%B = month name e.g. March  
+%b = month name(abbreviation) e.g. Mar  
+%m = 2 digits mo e.g. 03  
+%M = 1 digit mo e.g. 3  
+  
+DAY  
+%A = weekday e.g. Friday  
+%d = weekday digit.
+
+ubah `trending_date` menjadi tipe data date:
+
+```{r}
+vids$trending_date[1]
+```
+
+Note: kita tidak harus mencantumkan nama parameter fungsi, asalkan urutan parameternya sesuai default.
+
+```{r}
+base_date <- as.Date(x =vids$trending_date, format = "%y.%d.%m")
+head(base_date)
+```
+
+menggunakan lubridate:
+
+```{r message=FALSE, warning=FALSE}
+library(lubridate)
+```
+
+```{r}
+a <- "22/03/21"
+b <- "22-March-2021"
+c <- "Monday, 22-03-2021"
+d <- "2021/03/22, 1:42PM"
+```
+
+```{r}
+# metode base
+as.Date(a, "%d/%m/%y")
+```
+
+```{r}
+# metode lubridate: masukan urutan d/m/y nya saja
+dmy(a)
+dmy(b)
+dmy(c)
+ymd_hm(d)
+```
+
+idealnya dalam 1 kolom punya format data yang sama. kalau ada kejadian ini, kita harus seleksi manual mana data yang formatnya berbeda, kemudian kita samakan dulu formatnya dengan data yang lain, baru diubah ke tipe date. -> tantangan dalam data wrangling
+
+**Dive Deeper**: 
+
+1. Ubah kolom `trending_date` menjadi tipe date dengan fungsi dari package lubridate!
+
+```{r}
+head(vids)
+```
+
+```{r}
+vids$trending_date <- ydm(vids$trending_date)
+head(vids)
+```
+
+2. Ubah kolom `publish_time` menjadi tipe date-time dengan fungsi dari package lubridate! Perhatikan informasi timezone!
+
+Contoh:
+
+```{r}
+a <- ymd_hms(vids$publish_time) # ubah ke standard time UTC
+a[1] # UTC
+```
+
+```{r}
+b <- ymd_hms(vids$publish_time, tz = "Asia/Jakarta") # ubah dengan timezone
+b[1] # UTC +7
+```
+
+Referensi timezone: https://en.wikipedia.org/wiki/List_of_tz_database_time_zones#List
+
+```{r}
+# your code here
+vids$publish_time <- ymd_hms(vids$publish_time, tz = "America/New_York")
+```
+
+cek data:
+
+```{r}
+head(vids)
+```
+
+### `sapply()` & `lapply()`
+
+**sapply**: mengaplikasikan fungsi ke tiap baris pada suatu kolom secara bersamaan.
+
+formula: `sapply(data, fungsi)`
+
+untuk mengubah suatu nilai dengan nilai tertentu dapat digunakan fungsi `switch()`. Namun switch hanya dapat mengubah satu nilai:
+
+```{r}
+switch("1", 
+       "1" = "Education", 
+       "2" = "Travel", 
+       "3" = "Music")
+
+# # will return error
+# switch(c("1","2"),
+#        "1" = "Education",
+#        "2" = "Travel",
+#        "3" = "Music")
+```
+
+Hal ini diatasi dengan `sapply()`:
+
+```{r}
+data <- c("1","2")
+
+sapply(X = data, # data/kolom yang ingin diubah 
+       FUN = switch, # fungsi
+       "1" = "Education", 
+       "2" = "Travel", 
+       "4" = "Music")
+```
+
+**Note:** 
+
+* `switch()` membutuhkan kamus untuk mentranslasikan nilai. Bila nilai tidak ada pada kamus, maka dihasilkan NULL.
+* Nilai yang ditranslasi lebih baik diubah ke tipe karakter terlebih dahulu
+
+Mengubah `category_id` untuk tiap row dengan `switch()` dengan bantuan `sapply()`:
+
+```{r}
+vids$category_id <- sapply(as.character(vids$category_id), switch, 
+                           "1" = "Film and Animation",
+                           "2" = "Autos and Vehicles", 
+                           "10" = "Music", 
+                           "15" = "Pets and Animals", 
+                           "17" = "Sports",
+                           "19" = "Travel and Events", 
+                           "20" = "Gaming", 
+                           "22" = "People and Blogs", 
+                           "23" = "Comedy",
+                           "24" = "Entertainment", 
+                           "25" = "News and Politics",
+                           "26" = "Howto and Style", 
+                           "27" = "Education",
+                           "28" = "Science and Technology", 
+                           "29" = "Nonprofit and Activism",
+                           "43" = "Shows")
+
+vids$category_id <- as.factor(vids$category_id)
+```
+
+**lapply**: untuk mengaplikasikan fungsi (misal merubah tipe data) ke beberapa kolom secara bersamaan.
+
+formula: `lapply(data, fungsi)`
+
+*Note:* Di bawah adalah contoh penggunaan lapply(), namun pada kasus ini tidak wajib dilakukan.
+
+```{r}
+# cara base
+vids$views <- as.numeric(vids$views)
+vids$likes <- as.numeric(vids$likes)
+vids$dislikes <- as.numeric(vids$dislikes)
+vids$comment_count <- as.numeric(vids$comment_count)
+```
+
+```{r}
+# cara `lapply()`
+vids[,c("views", "likes", "dislikes", "comment_count")] <- lapply(vids[,c("views", "likes", "dislikes", "comment_count")], as.numeric)
+
+str(vids)
+```
+
+### Feature Engineering
+
+Feature engineering adalah membuat kolom/variabel baru berdasarkan data yang ada. Hal ini berguna untuk mengekstrak informasi tambahan yang bisa digunakan untuk eksplorasi data dan modeling.
+
+1. Ekstrak jam publish time ke dalam kolom baru `publish_hour`
+
+```{r}
+vids$publish_hour <- hour(vids$publish_time)
+head(vids)
+```
+
+2. Buat kolom `publish_when` dengan membagi `publish_hour` menjadi beberapa periode menggunakan `if else()`:
+
+```{r}
+# ifelse basic = 2 kondisi saja (yes/no)
+temp <- ifelse(test = vids$publish_hour < 12, 
+               yes = "day",
+               no = "night")
+
+# # tanpa nama argumen juga bisa
+temp <- ifelse(vids$publish_hour < 12, "day", "night")
+
+head(vids$publish_hour)
+head(temp)
+```
+
+```{r}
+# x = data
+pw <- function(x){ 
+    if(x < 8){
+      x <- "12am to 8am"
+    }else if(x >= 8 & x < 16){
+      x <- "8am to 4pm"
+    }else{
+      x <- "4pm to 12am"
+    }
+}
+```
+
+```{r}
+# hint: gunakan `sapply()`
+vids$publish_when <- sapply(vids$publish_hour, pw)
+vids$publish_when <- as.factor(vids$publish_when)
+head(vids)
+```
+
+**Dive Deeper**:
+
+3. Ekstrak hari publish ke dalam kolom baru `publish_wday`:
+
+```{r}
+vids$publish_wday <- wday(vids$publish_time, 
+                          label = T, 
+                          abbr = F,
+                          week_start = 1)
+head(vids)
+```
+ord = ordered factor
+
+Table of locales:
+https://docs.moodle.org/dev/Table_of_locales
+
+### `match()`
+
+Dalam data `vids` terdapat redudansi data yaitu terdapat video yang muncul beberapa kali karena trending lebih dari 1 hari. 
+
+```{r}
+length(vids$title)
+length(unique(vids$title))
+```
+
+Untuk analisis lanjutan, *kita hanya akan menggunakan data saat video tersebut pertama kali trending* demi mengurangi redudansi data. Untuk itu kita dapat menggunakan `unique()` dan `match()`.
+
+Contoh:
+
+```{r}
+# dummy data
+df <- data.frame(nama = c("Nabiilah", "Ajeng", "Nabiilah", "Arga"), 
+                 umur = c(22,23,22,22))
+df
+```
+
+```{r}
+# mengambil nama unique
+unique(df$nama)
+```
+
+```{r}
+# mencari index saat nama unique pertama kali muncul
+
+index <- match(unique(df$nama), df$nama) 
+         # pada index berapa `unique(df$nama)` cocok/match dengan `df$nama` 
+
+index
+```
+
+```{r}
+# filter data yang termasuk index
+df[index, ]
+```
+
+```{r}
+# mengaplikasikan pada data vids
+index.vids <- match(unique(vids$title), vids$title)
+vids.u <- vids[index.vids,]
+
+head(vids.u)
+```
+```{r}
+dim(vids.u)
+```
+
+### Missing Value
+
+Missing value (NA) dapat menyulitkan pengolahan data. Oleh karena itu perlu dideteksi dan bila ada perlu diberi perlakuan.
+
+```{r}
+# cek keseluruhan data
+anyNA(vids)
+```
+
+```{r}
+# cek jumlah NA per kolom
+colSums(is.na(vids))
+```
+
+## Base Plot
+
+**Exploratory Data Analysis** (EDA) Bertujuan untuk mendapat informasi dari data (explorasi). EDA dapat dilakukan menggunakan base plot.
+
+### Histogram
+
+**Untuk melihat distribusi data**. Contoh, bagaimana distribusi `publish_hour` dari data `vids.u`?
+
+```{r}
+hist(vids.u$publish_hour, breaks = 20, main = "Distribution of Publish Hour", xlab = "Publish Hour") 
+# breaks untuk mengatur detail pemecahan kotak histogram dari data
+```
+
+Insight: 
+* publish hour jam 10-12 paling tinggi masuk trending
+* ada indikasi bahwa data berdistribusi normal 
+
+### Boxplot
+
+Untuk melihat distribusi data, summary statistics, dan **outlier** dari data. Contoh, bagaimana distribusi `publish_hour` dari data `vids.u`?
+
+```{r}
+boxplot(vids$publish_hour, main = "Distribution of Publish Hour", xlab = "", ylab = "Publish Hour")
+```
+
+Insight: 
+
+* tidak ada outlier
+* ada indikasi berdistribusi normal, namun harus di test dulu
+
+### `plot()`
+
+`plot(x,y)`: Jenis plot yang dihasilkan berubah sesuai tipe data yang dimasukkan
+
+* 1 variabel, x kategori: **bar chart** 
+* 1 variabel, x numerik: **scatter plot**
+* 2 variabel, x dan y adalah numerik: **scatter plot** 
+* 2 variabel, x kategori, y numerik: **boxplot**
+
+```{r}
+plot(vids.u$likes, vids.u$views)
+```
+**Note:** Kita bisa tentukan tipe plot secara eksplisit di argumen `type =` pada `plot()`, namun perlu memperhatikan tipe plot yang tepat. Berikut [referensi](https://www.dummies.com/programming/r/how-to-create-different-plot-types-in-r/) untuk beragam type yang bisa dipakai.
+
+**Business Question**
+
+1. Apakah ada hubungan/pola tertentu antara `publish_hour` dengan `likes/views`?
+
+```{r}
+# plot(x,y)
+plot(as.factor(vids.u$publish_hour), vids.u$likes/vids.u$views)
+```
+
+Insight: 
+
+* memilih publish hour 1, 16, 18, 23 -> tidak ada outlier, tapi boleh diperhatikan nilai likes/viewnya juga
+* memilih jam 6 karena like/view sedikit sehingga viewer nya banyak
+* memilih jam 4 & 16 karena likes/view cukup tinggi
+
+2. Kita tertarik dengan category_id "Autos and Vehicles", "Gaming", dan "Travel and Events". Dari ketiga kategori tersebut, adakah hubungan antara nilai `likes/view` dan `dislikes/view`?
+
+Tahapan:
+
+a. subset data vids.u untuk kategori di atas:
+
+```{r}
+vids.agt <- vids.u[vids.u$category_id %in% c("Autos and Vehicles", "Gaming", "Travel and Events"), ]
+vids.agt
+```
+
+b. buat kolom `likesp` berisi likes/view dan `dislikesp` berisi dislikes/view:
+
+```{r}
+vids.agt$likesp <- vids.agt$likes/vids.agt$views
+vids.agt$dislikesp <- vids.agt$dislikes/vids.agt$views
+```
+
+additional cleaning (menghilangkan level yang tak ada pada data):
+
+```{r}
+levels(vids.agt$category_id)
+```
+
+```{r}
+vids.agt$category_id <- droplevels(vids.agt$category_id)
+```
+
+3. visualisasikan: 
+
+```{r}
+plot(vids.agt$likesp, vids.agt$dislikesp, col=vids.agt$category_id, pch=19)
+abline(lm(vids.agt$dislikesp ~ vids.agt$likesp), col= "red", lwd=2, lty=2)
+legend("topright", legend=levels(vids.agt$category_id), fill=1:3)
+```
+
+Insight:
+
+* korelasi likes/view dan dislikes/view positif lemah
+* video dari category "Autos and Vehicle" memiliki likes/view dan dislikes/view yang cenderung rendah dibanding yang lain
+
+**Dive Deeper**:
+
+Joe adalah seorang YouTuber baru yang ambisius. Ia ingin membuat konten video yang dapat trending dan juga disukai oleh banyak orang. Berdasarkan data `vids.u`, konten dengan kategori apa yang memiliki likes/view paling baik sehingga dapat meningkatkan pamor channelnya? Bantu Joe untuk memecahkan masalahnya!
+
+Tahapan:
+
+- memakai data apa? `vids.u`
+- kolom nya apakah sudah ada? belum, butuh informasi `likes/view`. bisa buat kolom baru / langsung diplotkan
+- buat visualisasi menggunakan `plot()`!
+
+```{r}
+# your code here
+plot(vids.u$category_id, vids.u$likes/vids.u$views)
+```
+
+Insight: Music memiliki likes/view paling tinggi sehingga potensial untuk meningkatkan pamor channel. Joe dapat memilih kategori Music
+
+**Summary Day 1**
+
+* Flow Data Visualisasi:
+  + Start Business Question
+  + Prepare the data -> Read Data + Data Wrangling
+  + Visualisasi
+
+* Data Wrangling:
+  + `lubridate`: package yang memudahkan kita untuk mengolah data tanggal dan waktu
+  + feature engineering: membuat kolom/variable baru dari data yang ada
+  + data wrangling dilakukan sesuai kebutuhan
+
+* Base plot: 
+  + untuk exploratory data analysis (EDA)
+  + dengan fungsi `plot()` dapat membuat beragam plot sesuai data yang dimasukkan.
+  + visualisasinya masih sederhana
+  + untuk mempercantik plot, codenya sulit dipahami dan mengharuskan user untuk menuliskan fungsi secara berurutan dan menjalankannya secara bersamaan sehingga tidak fleksibel
+
+* Tipe-tipe plot:
+  + histogram: melihat distribusi data numerik
+  + barchart: frekuensi data kategorik
+  + boxplot: 
+    + melihat distribusi data, summary statistics, dan outlier
+    + distribusi data numerik untuk tiap kategori
+  + scatterplot: melihat korelasi antar data
+  + line: melihat trend (ada unsur waktu)
+  
+---
+
+## `ggplot2`
+
+Dikembangkan oleh Hadley Wickham (2005) dimana sistem pembuatan grafiknya **layer-by-layer**. Sistem tersebut lebih mudah untuk kostumisasi plot sehingga digunakan untuk **explanatory data analysis** atau visualisasi yang ditujukan untuk audiens. 
+
+```{r}
+# install.packages("ggplot2")
+library(ggplot2)
+```
+
+formula: 
+
+`ggplot(data, mapping = aes(x,y, ...)) + geom_* + dst`
+
+1. Sebagai seorang YouTuber, kita ingin memiliki video dengan likeability (likes/view) yang tinggi, dan enggagement (comments/view) yang tinggi. Dari data `vids.agt`, manakah kategori yang paling baik untuk dibuatkan konten?
+
+Tahapan:
+
+a. Siapkan data:
+
+```{r}
+# buat kolom commentp (comment/view)
+vids.agt$commentp <- vids.agt$comment_count/vids.agt$views
+
+# cek data
+head(vids.agt)
+```
+
+b. Visualisasi data:
+
+x = category_id 
+y = likesp
+
+```{r}
+# main layer
+ggplot(data = vids.agt, mapping = aes(x = category_id, y = likesp))
+```
+
+```{r}
+# layer 1: boxplot
+ggplot(data = vids.agt, mapping = aes(x = category_id, y = likesp)) +
+  geom_boxplot()
+```
+
+```{r}
+# layer 2: scatterplot
+ggplot(data = vids.agt, mapping = aes(x = category_id, y = likesp)) +
+  geom_boxplot() +
+  geom_point()
+```
+
+```{r}
+# urutan code ggplot amat berpengaruh ke tampilan, layer terakhir akan menimpa layer sebelumnya
+ggplot(data = vids.agt, mapping = aes(x = category_id, y = likesp)) + # layer 1
+  geom_point() + # layer 2
+  geom_boxplot() # layer 3
+```
+
+```{r}
+# geom_point -> geom_jitter
+ggplot(data = vids.agt, mapping = aes(x = category_id, y = likesp)) +
+    geom_boxplot(outlier.shape = NA) + # outlier tidak ditampilkan karena sudah diplotkan oleh geom_jitter
+    geom_jitter() # scatterplot dengan titik yang random bergeser ke kiri/kanan, agar tidak tumpang tindih
+```
+
+Mengatur aesthetic berdasarkan/tidak berdasarkan data:
+
+Mengatur size `geom_jitter` berdasarkan `comment/view` (berdasarkan data):
+```{r}
+# masukan parameter di dalam aes() bila berdasarkan data
+ggplot(data = vids.agt, mapping = aes(x = category_id, y = likesp)) + 
+    geom_boxplot(outlier.shape = NA) + 
+    geom_jitter(mapping = aes(size = commentp))
+```
+
+Mengatur size `geom_jitter` tidak berdasarkan data:
+```{r}
+# masukan parameter di luar aes() bila tidak berdasarkan data
+ggplot(data = vids.agt, mapping = aes(x = category_id, y = likesp)) + 
+    geom_boxplot(outlier.shape = NA) + 
+    geom_jitter(size = 4) # size tidak berdasarkan data; seragam 4
+```
+
+Mewarnai plot agar lebih menarik:
+
+```{r}
+# col di dalam `ggplot()` akan mewarnai semua geom
+# apapun yang di set dalam fungsi `ggplot()` akan diaplikasikan ke layer berikutnya
+ggplot(data = vids.agt, mapping = aes(x = category_id, y = likesp, color = category_id)) + 
+    geom_boxplot(outlier.shape = NA) + 
+    geom_jitter(mapping = aes(size = commentp))
+```
+
+```{r}
+# col di dalam geom hanya mewarnai geom tersebut
+ggplot(data = vids.agt, mapping = aes(x = category_id, y = likesp)) + 
+    geom_boxplot(outlier.shape = NA) + 
+    geom_jitter(mapping = aes(size = commentp, color = category_id)) 
+```
+
+Pewarnaan menggunakan `col`/`color` vs `fill`:
+
+```{r}
+# fill untuk mewarnai area (bagian dalam shape)
+# col untuk mewarnai garis (border/line/point)
+
+ggplot(data = vids.agt, mapping = aes(x = category_id, y = likesp)) + 
+    geom_boxplot(outlier.shape = NA, fill = "pink", col = "red") + 
+    geom_jitter(mapping = aes(size = commentp, color = category_id)) 
+```
+
+**Note:** Kita telah memahami cara pembuatan plot di ggplot2. Selanjutnya kita juga perlu memperhatikan tampilan plot. Plot yang terlalu rumit justru dapat membuyarkan fokus dari informasi yang ingin disampaikan. Contoh, kita tidak perlu mewarnai `geom_jitter` berdasarkan `category_id` karena perbedaan `category_id` sudah dijelaskan di x-axis. 
+
+**Dive Deeper**:
+
+Percantik Plot! Untuk membuat **plot yang informatif, minimalis, dan apik!**, lengkapi code di bawah agar terbentuk plot dengan spesifikasi berikut:
+
+* x = category_id
+* y = likesp
+* size geom_jitter = commentp
+* warna area boxplot = "black"
+* warna line boxplot = "red"
+* warna geom_jitter = "red"
+
+```{r}
+# buat plot
+g <- ggplot(data = vids.agt, mapping = aes(x = category_id, y = likesp)) +
+  geom_boxplot(outlier.shape = NA, fill = "black", col = "red") +
+  geom_jitter(mapping = aes(size = commentp), col = "red", 
+              alpha = 0.5) # aes u/ mengatur transparansi warna
+
+g
+```
+
+```{r}
+# finalisasi plot dengan label & tema
+g + labs(title = "Likes to View Comparison", 
+       subtitle = "YouTube Trending Data, 2018", 
+       x = NULL,
+       y = "Likes/View", 
+       caption = "YouTube US",
+       size = "Comments/View") + # mengatur nama legend untuk aesthetic size
+  theme_minimal() # tema bawaan di ggplot2
+```
+
+Insight: 
+
+* Video dengan likes/view paling tinggi ada di kategori Gaming
+* Engagement rate (comment/view) kategori gaming juga secara umum lebih tinggi dibanding kategori lain. 
+* Kategori gaming baik untuk dibuatkan konten video
+
+**Important Points:**
+
+* **ggplot2** bekerja *layer-by-layer*, layer pertama akan ditimpa oleh layer berikutnya.
+* `geom_*`: untuk menambahkan elemen geometrik pada plot (tipe plot):
+  + `geom_boxplot()`: boxplot
+  + `geom_point()`: scatterplot
+  + `geom_jitter()`: scatterplot (dengan titik yang randomly scattered ke kiri/kanan)
+  + `labs()`: label seperti title, subtitle, y-axis & x-axis label, dll 
+* Beberapa parameter *aesthetic* (elemen visual) untuk plot:
+  + x: sumbu x -> berdasarkan data
+  + y: sumbu y -> berdasarkan data
+  + size: ukuran
+  + col/color: mewarnai garis/titik
+  + fill: mewarnai area
+  + alpha: transparansi
+* untuk mengatur aesthetic **berdasarkan data**, masukan **di dalam** `aes()`.
+* untuk mengatur aesthetic untuk semua geom, masukan `aes()` di dalam `ggplot()` 
+
+## Top Channel in Trending Videos
+
+Sebagai Plan B, kita juga berencana untuk kolaborasi dengan channel YouTube yang sering muncul dalam pencarian video trending! Adakah channel YouTube yang memiliki **lebih dari sama dengan 10 video trending**? Channel YouTube mana yang baik untuk jadi rekan kolaborasi?
+
+Tahapan:
+
+1. Siapkan data
+
+```{r}
+head(vids.u)
+```
+
+```{r}
+# buat data frame
+vids.chan <- as.data.frame(table(vids.u$channel_title))
+head(vids.chan)
+```
+
+```{r}
+# filter channel dengan kemunculan video trending >= 10
+vids.chan <- vids.chan[vids.chan$Freq >= 10,]
+head(vids.chan)
+```
+
+```{r}
+# urutkan data
+vids.chan <- vids.chan[order(vids.chan$Freq, decreasing = T),]
+head(vids.chan)
+```
+
+2. Visualisasi data
+
+```{r}
+# plot dasar
+ggplot(data = vids.chan, mapping = aes(x = Var1, y = Freq)) +
+  geom_col()
+```
+
+Task percantik plot:
+
+- ubah angle pada x axis text
+
+```{r}
+ggplot(data = vids.chan, mapping = aes(x = Var1, y = Freq)) +
+  geom_col() +
+  theme(axis.text.x = element_text(angle = 90, # 90 derajat
+                                   hjust = 1)) # horizontal just, agar text persis di sebelah tick marks
+```
+
+- flip koordinat x - y 
+
+```{r}
+ggplot(data = vids.chan, mapping = aes(x = Freq, y = Var1)) +
+  geom_col()
+```
+
+- top 10 data
+
+```{r}
+ggplot(data = vids.chan[1:10,], # filter 10 data teratas
+       mapping = aes(x = Freq, y = Var1)) +
+  geom_col()
+```
+
+- urutannya diatur dari tertinggi ke terendah
+
+```{r}
+ggplot(data = vids.chan[1:10,], 
+       mapping = aes(x = Freq,
+                     y = reorder(Var1, Freq))) + # reorder Var1 (channel) berdasarkan Freq
+  geom_col()
+```
+
+- menambahkan warna
+
+```{r}
+ggplot(data = vids.chan[1:10,], mapping = aes(x = Freq, y = reorder(Var1, Freq))) +
+  geom_col(mapping = aes(fill = Freq)) # warna otomatis gradient berdasarkan nilai Freq yang numerik
+```
+
+```{r}
+ggplot(data = vids.chan[1:10,], mapping = aes(x = Freq, y = reorder(Var1, Freq))) +
+  geom_col(mapping = aes(fill = Freq), 
+           col = "firebrick") + # mengatur border color
+  scale_fill_gradient(low = "white", high = "salmon") # mengatur warna gradient manual
+```
+
+- kasih garis rata-rata
+
+```{r}
+ggplot(data = vids.chan[1:10,], mapping = aes(x = Freq, y = reorder(Var1, Freq))) +
+  geom_col(mapping = aes(fill = Freq), col = "firebrick") + 
+  scale_fill_gradient(low = "white", high = "salmon") + 
+  geom_vline(xintercept = mean(vids.chan$Freq), # titik x nya
+             col = "firebrick") # warna vertical line
+```
+- menambahkan text pada plot
+
+```{r}
+# label: text yang ada background nya
+ggplot(data = vids.chan[1:10,], mapping = aes(x = Freq, y = reorder(Var1, Freq))) +
+  geom_col(mapping = aes(fill = Freq), col = "firebrick") + 
+  scale_fill_gradient(low = "white", high = "salmon") + 
+  geom_vline(xintercept = mean(vids.chan$Freq), col = "firebrick") +
+  geom_label(aes(label = Freq)) # label berdasarkan data Freq
+```
+```{r}
+# text: text tanpa background
+ggplot(data = vids.chan[1:10,], mapping = aes(x = Freq, y = reorder(Var1, Freq))) +
+  geom_col(mapping = aes(fill = Freq), col = "firebrick") + 
+  scale_fill_gradient(low = "white", high = "salmon") + 
+  geom_vline(xintercept = mean(vids.chan$Freq), col = "firebrick") +
+  geom_text(aes(label = Freq), 
+            nudge_x = -1) # untuk menggeser text menjadi 1 poin ke arah kiri
+```
+
+- mengatur labs: kasih title, x & y axis title, dll
+
+```{r}
+ggplot(data = vids.chan[1:10,], mapping = aes(x = Freq, y = reorder(Var1, Freq))) +
+  geom_col(mapping = aes(fill = Freq), col = "firebrick") + 
+  scale_fill_gradient(low = "white", high = "salmon") + 
+  geom_vline(xintercept = mean(vids.chan$Freq), col = "firebrick") +
+  geom_text(aes(label = Freq), nudge_x = -1) +
+  labs(title = "Highest Channel in US Trending Videos",
+       subtitle = "from November 2017 to January 2018",
+       x = "Video Count",
+       y = "Channel Title", # untuk menghilangkan labs tertentu
+       caption = "Source: YouTube US Trending") # biasanya diisi sumber data
+```
+- menghilangkan chart junk (elemen chart yang terlalu banyak/redundant information)
+
+Mari hilangkan legend Freq karena sudah ditampilkan pada geom_text, dan channel_title karena sudah diinformasikan pada title dan axis text nya.
+
+```{r}
+ggplot(data = vids.chan[1:10,], mapping = aes(x = Freq, y = reorder(Var1, Freq))) +
+  geom_col(mapping = aes(fill = Freq), col = "firebrick", 
+           show.legend = F) + # agar legend dari geom ini (fill) tidak ditampilkan
+  scale_fill_gradient(low = "white", high = "salmon") + 
+  geom_vline(xintercept = mean(vids.chan$Freq), col = "firebrick") +
+  geom_text(aes(label = Freq), nudge_x = -1) +
+  labs(title = "Highest Channel in US Trending Videos",
+       subtitle = "from November 2017 to January 2018",
+       x = "Video Count",
+       y = NULL, # untuk menghilangkan labs tertentu
+       caption = "Source: YouTube US Trending")
+```
+
+- menambahkan warna lain pada barplot untuk top 3:
+
+```{r}
+ggplot(data = vids.chan[1:10,], mapping = aes(x = Freq, y = reorder(Var1, Freq))) +
+  geom_col(mapping = aes(fill = Freq), col = "firebrick", show.legend = F) +
+  geom_col(fill = "indianred3", col = "firebrick", # buat geom_col baru saja (di layer baru)
+           data = vids.chan[1:3,]) + # bisa kasih data berbeda; gunakan hanya top 3 sesuai keinginan
+  scale_fill_gradient(low = "white", high = "salmon") + 
+  geom_vline(xintercept = mean(vids.chan$Freq), col = "firebrick") +
+  geom_text(aes(label = Freq), nudge_x = -1) +
+  labs(title = "Highest Channel in US Trending Videos",
+       subtitle = "from November 2017 to January 2018",
+       x = "Video Count", y = NULL,
+       caption = "Source: YouTube US Trending")
+```
+
+- menggunakan theme_minimal (theme bawaan ggplot2)
+
+```{r}
+ggplot(data = vids.chan[1:10,], mapping = aes(x = Freq, y = reorder(Var1, Freq))) +
+  geom_col(mapping = aes(fill = Freq), col = "firebrick", show.legend = F) +
+  geom_col(fill = "indianred3", col = "firebrick", # buat geom_col baru saja (di layer baru)
+           data = vids.chan[1:3,]) + # bisa kasih data berbeda; gunakan hanya top 3 sesuai keinginan
+  scale_fill_gradient(low = "white", high = "salmon") + 
+  geom_vline(xintercept = mean(vids.chan$Freq), col = "firebrick") +
+  geom_text(aes(label = Freq), nudge_x = -1) +
+  labs(title = "Highest Channel in US Trending Videos",
+       subtitle = "from November 2017 to January 2018",
+       x = "Video Count",
+       y = NULL, # untuk menghilangkan labs tertentu
+       caption = "Source: YouTube US Trending") +
+  theme_minimal()
+```
+
+- mengatur gradasi warna pada top 3 (PR):
+
+```{r}
+ggplot(data = vids.chan[1:10,], mapping = aes(x = Freq, y = reorder(Var1, Freq))) +
+  geom_col(mapping = aes(fill = Freq), col = "firebrick", show.legend = F) +
+  geom_col(aes(fill = Freq), col = "firebrick", 
+           data = vids.chan[1:3,]) + 
+  scale_fill_gradient(low = "white", high = "salmon") + 
+  geom_vline(xintercept = mean(vids.chan$Freq), col = "firebrick") +
+  geom_text(aes(label = Freq), nudge_x = -1) +
+  labs(title = "Highest Channel in US Trending Videos",
+       subtitle = "from November 2017 to January 2018",
+       x = "Video Count",
+       y = NULL, # untuk menghilangkan labs tertentu
+       caption = "Source: YouTube US Trending") +
+  theme_minimal()
+```
+
+Insight: 
+
+- content channel YouTube US tertinggi adalah Refinery29
+- channel film lebih diminati dr channel olahraga :)
+
+**PR Instructor:**
+
+- menambahkan text berisi informasi rata-rata Freq, disandingkan dengan vline
+
+```{r}
+ggplot(data = vids.chan[1:10,], mapping = aes(x = Freq, y = reorder(Var1, Freq))) +
+  geom_col(mapping = aes(fill = Freq), col = "firebrick", show.legend = F) +
+  geom_col(fill = "indianred3", col = "firebrick", data = vids.chan[1:3,]) + 
+  scale_fill_gradient(low = "white", high = "salmon") + 
+  geom_vline(xintercept = mean(vids.chan$Freq), col = "firebrick") +
+  geom_text(aes(label = Freq), nudge_x = -1) +
+  
+  # tambah label
+  geom_label(label = paste("Average\n", round(mean(vids.chan$Freq))), # isi label
+            x = mean(vids.chan$Freq), # posisi x label
+            y = 9) + # posisi y label 
+  
+  labs(title = "Highest Channel in US Trending Videos",
+       subtitle = "from November 2017 to January 2018",
+       x = "Video Count", y = NULL,
+       caption = "Source: YouTube US Trending") +
+  theme_minimal()
+```
+
+- mengatur title y-axis "Channel Title" di Top Kiri, horizontal:
+
+```{r}
+ggplot(data = vids.chan[1:10,], mapping = aes(x = Freq, y = reorder(Var1, Freq))) +
+  geom_col(mapping = aes(fill = Freq), col = "firebrick", show.legend = F) +
+  geom_col(fill = "indianred3", col = "firebrick", # buat geom_col baru saja (di layer baru)
+           data = vids.chan[1:3,]) + # bisa kasih data berbeda; gunakan hanya top 3 sesuai keinginan
+  scale_fill_gradient(low = "white", high = "salmon") + 
+  geom_vline(xintercept = mean(vids.chan$Freq), col = "firebrick") +
+  geom_text(aes(label = Freq), nudge_x = -1) +
+  labs(title = "Highest Channel in US Trending Videos",
+       subtitle = "from November 2017 to January 2018",
+       x = "Video Count", y = "Channel Title",
+       caption = "Source: YouTube US Trending") +
+  theme_minimal() + 
+  theme(axis.title.y = element_text(angle = 0))
+```
+
+Hal di atas bisa dilakukan namun masih terlihat kurang rapih/ada bagian plot yang kosong. Bila ingin tetap ada "Channel Title" pada bagian atas axis text y, bisa melakukan trik untuk plot sebagai berikut ([Referensi Diskusi](https://data-hacks.com/how-add-text-outside-ggplot2-plot-borders-r)):
+
+```{r}
+ggplot(data = vids.chan[1:10,], mapping = aes(x = Freq, y = reorder(Var1, Freq))) +
+  geom_col(mapping = aes(fill = Freq), col = "firebrick", show.legend = F) +
+  geom_col(fill = "indianred3", col = "firebrick", data = vids.chan[1:3,]) + 
+  scale_fill_gradient(low = "white", high = "salmon") + 
+  geom_vline(xintercept = mean(vids.chan$Freq), col = "firebrick") +
+  geom_text(aes(label = Freq), nudge_x = -1) +
+  
+  # menambah text dan menggambar diluar area plot (lihat posisi x & y nya)
+  geom_text(label = "Channel Title", x = -8, y = 11.5) +
+  # mengatur setting koordinat x & y
+  coord_cartesian(clip = "off") + # agar bisa menggambar diluar area plot, defaultnya "yes"
+  
+  labs(title = "Highest Channel in US Trending Videos",
+       subtitle = "from November 2017 to January 2018",
+       x = "Video Count", y = NULL,
+       caption = "Source: YouTube US Trending") +
+  theme_minimal()
+```
+
+
+**Note:** Bila ingin kostumisasi theme lebih detail dan manual dapat menggunakan `theme()`. Fungsi tersebut mengatur bagian non-data dari plot dan dapat dipilih bagian plot mana yang ingin diatur (lihat peta plot pada ppt "DV_intro").
+
+**Important points:**
+
+1. Pasangkan nama fungsi dan kegunaannya di bawah ini:
+
+* `geom_col`: membuat barplot (variable kategorik vs variabel numerik)
+* `reorder()`: untuk mengurutkan levels (kategori) berdasarkan nilai tertentu (numerik)
+* `geom_text`: menambah text pada plot
+* `geom_label`: menambah label (text dengan background) pada plot
+* `scale_fill_*`: mengatur warna fill
+
+2. Note pembuatan plot:
+
+* kita dapat memasukan data baru ke `geom_*` untuk membuat visual yang datanya berbeda/lebih spesifik dari data awal di `ggplot()`
+* banyak fungsi `scale_*` lain (color, fill, x, y, dll) yang dapat dieksplor di cheatsheet
+* kostumisasi tema dapat diatur di `theme()` atau menggunakan tema bawaan/package tambahan
+
+**Dive Deeper PR!**:
+
+Visualisasikan 15 channel dengan jumlah video trending tertinggi, highlight 5 channel teratas dengan warna yang berbeda. Berikan elemen-elemen lain untuk mempercantik plot.
+
+```{r}
+
+```
+
+## Multivariate Plot
+
+Multivariate plot berguna untuk **menampilkan nilai dari beragam variabel secara bersamaan**. 
+
+**Business Question:** 
+
+Mari lihat persebaran likes/view yang dimiliki masing-masing kategori video di bawah ini:
+```{r}
+# exploratory data
+ggplot(data = vids.u, mapping = aes(x = likes/views, y = category_id)) + 
+  geom_boxplot()
+```
+
+Kita mengetahui bahwa dari keseluruhan kategori, **Music**, **Comedy**, dan **Howto and Style** memiliki likes per view tertinggi. Mari kita lihat lebih detail bagaimana rata-rata **likes/view**, **dislikes/view**, dan **comment/view** dari ketiga kategori tersebut?
+
+**Tahapan:**
+
+1. **Siapkan data**
+
+```{r}
+# subset data dan simpan ke objek `vids.mul`
+vids.mul <- vids.u[vids.u$category_id %in% c("Music", "Comedy", "Howto and Style"),]
+
+# drop levels
+vids.mul$category_id <- droplevels(vids.mul$category_id) # membuang levels yang tidak ada pada data
+
+# cek data
+head(vids.mul)
+```
+
+```{r}
+# buat kolom
+vids.mul$likesp <- vids.mul$likes/vids.mul$views
+vids.mul$dislikesp <- vids.mul$dislikes/vids.mul$views
+vids.mul$commentp <- vids.mul$comment_count/vids.mul$views
+```
+
+```{r}
+# aggregasi data; rata-rata likesp, dislikesp, commentp untuk tiap category_id
+vids.mulagg <- aggregate.data.frame(list(dislikesp = vids.mul$dislikesp, # kolom yang ingin diaggregasi
+                                         likesp = vids.mul$likesp,
+                                         commentp = vids.mul$commentp),
+                                    by = list(category = vids.mul$category_id), # aggregasi berdasarkan apa
+                                    FUN = mean)
+
+vids.mulagg
+```
+
+```{r}
+# transform data wide -> long
+library(tidyr)
+
+vids.pivot <- pivot_longer(data = vids.mulagg, 
+             cols = c("dislikesp", "likesp", "commentp"), # kolom yang ingin di gabung jadi long format
+             names_to = "stats", values_to = "nilai") # nama kolom menjadi ...
+vids.pivot
+```
+
+2. **Visualisasi data**
+
+Multivariate plot dapat dibuat menggunakan `geom_col()` dengan mengatur `position`:
+
+* **dodge** = menampilkan nilai asli -> untuk membandingkan nilai asli
+* **fill** = menampilkan proporsi -> untuk memandingkan proporsi
+* **stack** = untuk menampilkan nilai asli dan proporsi (default) -> melihat nilai asli sekaligus membandingkan proporsi
+
+```{r}
+ggplot(data = vids.pivot, mapping = aes(x = category, y = nilai)) +
+  geom_col(mapping = aes(fill = stats), 
+           position = "dodge")
+```
+
+Insight: 
+
+* likesp tertinggi dimiliki oleh music
+* commentp tertinggi dimiliki oleh Howto and Style
+
+**Contoh Position Lain**
+
+**Business Question:** Ingin menvisualisasi proporsi video yang di publish pada waktu tertentu (`publish_when`) untuk tiap kategori.
+
+```{r}
+# siapkan data
+vids.mul2 <- as.data.frame(table(vids.u$category_id,
+                                 vids.u$publish_when))
+vids.mul2 # data sudah dalam bentuk long
+```
+```{r collapse=TRUE}
+# position fill
+ggplot(data = vids.mul2, mapping = aes(x = Freq, y = reorder(Var1, Freq))) +
+  geom_col(mapping = aes(fill = Var2), position = "fill") +
+  labs(x = "Video Count Proportion", y = NULL, 
+       fill = NULL,
+       title = "Proportion of YouTube Trending Videos",
+       subtitle = "Categories vs. Publish Hour") +
+  scale_fill_brewer(palette = "Set2") +
+  theme_minimal() +
+  theme(legend.position = "top")
+```
+
+**Insight**: 
+
+* Secara umum video banyak di publish pada jam 8am-4pm
+* Kategori Shows hanya memiliki video yang dipublish pada jam 4pm-12am
+
+**Contoh Position Lain**
+
+**Business Question:** Kategori video apa yang paling banyak masuk dalam jejeran video trending? Pada jam berapa kebanyakan video dari kategori tersebut dipublish?
+
+```{r collapse=TRUE}
+# position stack
+ggplot(data = vids.mul2, mapping = aes(x = Freq, y = reorder(Var1, Freq))) +
+  geom_col(mapping = aes(fill = Var2), position = "stack") + # default position
+  labs(x = "Video Count", y = NULL,
+       fill = NULL,
+       title = "Categories with Highest Trending Videos",
+       subtitle = "Colored per Publish Hour") +
+  scale_fill_brewer(palette = "Set2") +
+  theme_minimal() +
+  theme(legend.position = "top")
+```
+
+**Insight**: Category yang videonya masuk ke dalam jejeran video trending terbanyak adalah Entertainment, dengan jam publish video adalah pada jam 8 pagi hingga 4 sore.
+
+## Faceting
+
+Memplotkan variabel di panel terpisah, sehingga visual menjadi lebih jelas.
+
+**Contoh:** Ingin memplotkan secara terpisah **likesp**, **dislikesp**, dan **commentp** per kategori dari data `vids.mul` dengan range axis y yang berbeda (menyesuaikan).
+
+```{r}
+# data
+vids.pivot
+```
+```{r}
+# visualisasi
+ggplot(data = vids.pivot, mapping = aes(x = category, y = nilai)) +
+  geom_col(mapping = aes(fill = category), 
+           position = "dodge") +
+  facet_wrap(~stats, scales = "free_y") +
+  theme(axis.text.x = element_text(angle = 90))
+```
+
+## Line Plot
+
+Line plot berguna untuk menvisualisasikan trend. 
+
+**Contoh:** Visualisasikan trend **rata-rata viewers** tiap `publish_hour` untuk `category_id` Music, Comedy, Howto and Style!
+
+1. Siapkan data
+
+```{r}
+head(vids.mul)
+```
+
+```{r}
+# aggregate data
+vids.trend <- aggregate(formula = views ~ publish_hour + category_id, data = vids.mul, FUN = mean)
+vids.trend
+```
+
+```{r}
+# visualisasi geom_line
+ggplot(data = vids.trend, mapping = aes(x = publish_hour, y = views)) +
+  geom_line(aes(group = category_id, # group untuk menentukan line dibuat berdasarkan kolom tertentu
+                col = category_id)) + # `col` juga bisa langsung dimasukkan ke ggplot() utk diaplikasikan ke semua geom
+  geom_point(aes(col = category_id))
+```
+
+**Insight**: 
+
+* comedy dan howto and style paling banyak dilihat pada dini hari
+* Music paling tinggi dilihat pada jam malam hari (21:00)
+
+**Important Points**:
+
+* **Multivariate plot**: untuk menampilkan nilai dari beragam variabel secara bersamaan
+* **Faceting**: untuk memplotkan variabel di panel terpisah, sehingga visual menjadi lebih jelas.
+* **Line plot**: untuk menvisualisasikan trend. Dapat menggunakan `geom_line()` dan parameter yang khas adalah `group` untuk mengatur grouping line berdasarkan variable/kolom apa.
+  + group = nama kolom; bila dibuat garis untuk masing-masing kategori
+  + group = 1; bila ingin dibuat 1 line saja
+
+# Theme
+
+Theme bawaan ggplot2:
+
+```{r}
+plot_trend <- ggplot(data = vids.trend, mapping = aes(x = publish_hour, y = views)) +
+  geom_line(aes(group = category_id, # group untuk menentukan line dibuat berdasarkan kolom tertentu
+                col = category_id)) +
+  geom_point(aes(col = category_id))
+```
+
+```{r}
+plot_trend + theme_minimal()
+```
+
+Customize theme manual menggunakan `theme()`:
+
+```{r}
+plot_trend +
+  # theme_classic() +
+  theme(axis.line = element_line(colour = "white"),
+        axis.ticks.y = element_blank(),
+        axis.ticks.x = element_blank(),
+        axis.text.x = element_blank(), 
+        
+        panel.background = element_rect(fill = "white"),
+        panel.grid = element_line(color = "grey"))
+```
+
+# [Opt] Interactive Map with `leaflet`
+
+Kita dapat membuat interactive map dengan bantuan package `leaflet`. Leaflet sendiri adalah open-source JavaScript library untuk pembuatan interactive maps.
+
+Contoh sederhana:
+
+```{r}
+library(leaflet)
+
+# get icon
+ico <- makeIcon(
+    iconUrl = "https://algorit.ma/wp-content/uploads/2017/07/logo_light_trans.png",
+    iconWidth=177/2, iconHeight=41/2
+)
+
+# make dummy data
+set.seed(418)
+loca <- data.frame(lat=runif(5, min = -6.24, max=-6.23),
+                   lng=runif(5, min=106.835, max=106.85))
+
+# check data
+loca
+```
+
+```{r}
+# create a leaflet map widget
+map1 <- leaflet()
+
+# add tiles from open street map
+map1 <- addTiles(map1)
+
+# add markers
+map1 <- addMarkers(map1, data = loca, icon=ico)
+
+map1
+```
+
+```{r}
+# prepare pop-up
+pops <- c(
+    "<h3>Algoritma Main HQ</h3><p>Visit us here!</p>",
+    "<strong>Algoritma Business Campus</strong>", 
+    "<h3>In-Construction</h3><p>New Secondary Campus</p>",
+    "<strong>Secondary Campus</strong>",
+    "<strong>The Basecamp (business-school)</strong>"
+)
+```
+
+```{r}
+# make new leaflet
+map2 <- leaflet()
+map2 <- addTiles(map2)
+map2 <- addMarkers(map2, data = loca, icon=ico, popup = pops)
+
+map2
+```
+
+Berikut adalah website dan referensi yang dapat mempermudah pemahaman kita mengenai leaflet:
+
+* [Leaflet for R](https://rstudio.github.io/leaflet/)
+* [Creating Choropleth Map for Geocoding in R](https://algotech.netlify.com/blog/creating-choropleth-with-mapshaper-and-r/)
+
+# Further Readings
+
+Berikut adalah referensi-referensi lain dan website yang dapat memudahkan kita untuk mengekplorasi seputar data visualisasi di R:
+
+* [ggplot2: Elegant Graphics for Data Analysis by Hadley Wickham](https://ggplot2-book.org/)
+* [Data-to-Viz](https://www.data-to-viz.com/): ragam tipe data dan plot yang cocok untuk data tersebut, dilengkapi contoh plot dan coding
+* [Algotech - Rplicate Series](https://algotech.netlify.app/tags/rplicate/)
+* [ggplot2 extensions](https://exts.ggplot2.tidyverse.org/): fitur-fitur tambahan yang bisa diintegrasi dengan ggplot2
+* [Eye Dropper Chrome extensions](https://chrome.google.com/webstore/detail/eye-dropper/hmdcmlfkchdmnmnmheododdhjedfccka): untuk memudahkan memilih warna costum dari internet
+* [HTML ColorCodes](https://htmlcolorcodes.com): untuk memilih warna costum dari internet
+
+---
+
+
