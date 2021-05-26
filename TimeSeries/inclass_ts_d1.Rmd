@@ -1,0 +1,439 @@
+---
+title: 'Time Series & Forecasting : In-class materials'
+author: "Nabiilah Ardini Fauziyyah"
+date: "`r format(Sys.Date(), '%B %e, %Y')`"
+output:
+  html_document:
+    theme: cosmo
+    highlight: breezedark
+    toc: true
+    toc_float:
+      collapsed: true
+    df_print: paged
+---
+
+```{r setup, include=FALSE}
+# clear-up the environment
+rm(list = ls())
+
+# chunk options
+knitr::opts_chunk$set(
+  message = FALSE,
+  warning = FALSE,
+  fig.align = "center",
+  comment = "#>"
+)
+
+options(scipen = 100)
+
+# common library
+library(dplyr)
+library(lubridate)
+library(ggplot2)
+```
+
+1. Time Series: Deret waktu
+
+* Analisis dari data yang dikoleksi pada **interval waktu yang teratur**
+* Analisis berlandaskan ide, **meramal nilai di masa depan berdasarkan pola yang terdapat di masa lalu**.
+
+2. Forecasting: Prediksi/peramalan di masa depan dari data time series.
+
+* Regresi: y ~ x
+* Forecasting: y ~ y di masa lampau
+
+# Working with Time Series
+
+## Objek Time Series
+
+Untuk analisis time series di R, kita perlu convert data kita menjadi **objek ts**.
+
+* `data`: variabel yang ingin diamati (target)
+* `start`: periode awal data
+* `frequency`: penentuan pola musiman/*seasonality* yang ingin diperhatikan
+
+Cara menentukan frequency: 
+
+1. cek data direkam per satuan waktu apa?
+2. pola yang ingin dilihat per satuan waktu apa?
+
+Contoh:
+
+1. Algoritma mencatat jumlah pendaftar Academy di tiap **kuartal**. Ingin dipertimbangkan pola musiman/seasonality **tahunan**. Maka frequency yang dipakai? ...
+
+```{r, out.width = "80%", echo = FALSE, fig.align = "center"}
+knitr::include_graphics("img/frequency.PNG")
+```
+
+2. Kita memiliki data penjualan **harian** dan ingin melihat seasonality **mingguan**. Frequency yang dipakai? ...
+
+3. Kita memiliki data penjualan **bulanan** dan ingin melihat seasonality **tahunan**. Frequency yang dipakai? ...
+
+4. Kita memiliki data aktivitas pengunjung website per **jam** dan ingin melihat seasonality **mingguan**. Frequency yang dipakai? ...
+
+5. Kita memiliki data penjualan **harian** namun tanpa hari weekend (toko tutup) dan kita ingin melihat seasonality **mingguan**. Frequency yang dipakai? ...
+
+Sekarang, mari coba membuat objek ts. Berikut adalah data emisi gas Indonesia sejak tahun 1970 hingga 2012 per tahunnya.
+
+```{r}
+gas <- read.csv("data_input/environment_1970f.csv")
+head(gas)
+```
+
+Buatlah objek time series dari *Carbon Dioxide (CO2) Emission* dengan seasonality tahunan (per 1 tahun):
+
+```{r}
+gas_ts <- ts(data = ..., 
+             start = ...,
+             end = ...,
+             frequency = ...)
+gas_ts
+```
+
+Buat visualisasinya:
+
+```{r}
+library(forecast)
+
+gas_ts %>% 
+  autoplot()
+```
+
+Untuk visual yang lebih jelas di rentang waktu tertentu, kita bisa gunakan `window()`:
+
+```{r}
+gas_ts %>% 
+  window(start = 1990, end = 2005) %>% 
+  autoplot() + 
+  geom_point()
+```
+
+Insight: Terjadi peningkatan emisi gas yang amat tinggi pada tahun 1997 yang mungkin disebabkan oleh [Kebakaran Hutan 1997](https://id.wikipedia.org/wiki/Kebakaran_hutan_Indonesia_1997) 
+
+**Diskusikan!** objek `gas_ts` berasal dari data yang direkam tahunan dan kita mengatur pola musiman tahunan (frequency = 1). Apakah kita bisa menganalisis pola musimannya?
+
+* Jawaban: ...
+
+**Note:** pemilihan frequency umumnya menggunakan ukuran waktu 1 level di atasnya, atau yang lebih atas lagi. (data harian dengan seasonality mingguan / bulanan / dst.)
+
+## Syarat Data Time Series
+
+1. Data harus terurut berdasarkan waktu
+
+Bila kita punya data acak:
+
+```{r}
+data.frame(time = c(2010,2012,2011,2013,2014), y = c(10,15,12,17,16))
+```
+
+Sesudah dijadikan objek ts, akan dianggap sudah terurut, sehingga misleading:
+
+```{r}
+data.frame(time = c(2010,2011,2012,2013,2014), y = c(10,15,12,17,16))
+```
+
+Maka data harus diurutkan terlebih dahulu (misal menggunakan `arrange()`), baru dibuat objek ts. 
+
+2. Tidak boleh ada waktu yang bolong
+
+Bila ada data yang bolong (tahun 2011):
+
+```{r}
+data.frame(Time = c(2010,2012,2013,2014), y = c(10,15,17,16))
+```
+
+Sesudah menjadi object ts, akan dianggap lengkap:
+
+```{r}
+data.frame(Time = c(2010,2011,2012,2013), y = c(10,15,17,16))
+```
+
+Maka harus dilakukan `pad()` terlebih dulu. Berikut [dokumentasinya](https://askalgo.netlify.app/#data-preprocessing.
+
+3. Tidak boleh ada NA
+
+a. bisa diganti dengan 0: kalau memang seharusnya nol.
+
+b. Bisa diganti dengan nilai di sekitarnya menggunakan fungsi `na.fill()` dari package zoo, atau cara2 lain. Beberapa referensi dapat ditemukan [disini](https://askalgo.netlify.app/#data-preprocessing)
+
+**Dive Deeper!**
+
+Data `births` terdiri dari 168 observasi **tingkat kelahiran per bulan di New York**. Data ini terdiri dari 2 variabel, yaitu:
+
+* date: tanggal.
+* births: tingkat kelahiran.
+
+```{r}
+# read data 
+ny_birth <- read.csv("data_input/nybirth.csv")
+
+head(ny_birth)
+```
+
+Pastikan data sudah siap untuk dibuat objek ts (sudah terurut, tidak ada waktu yang bolong, tidak ada NA)
+
+```{r}
+# data wrangling
+ny_birth <- ny_birth %>%
+  mutate(date = ymd(date)) %>% 
+  arrange(date) %>% 
+  padr::pad()
+
+anyNA(ny_birth)
+```
+
+Coba ubah menjadi objek time series dengan seasonality tahunan:
+
+```{r}
+# make ts object
+birth_ts <- ...
+```
+
+```{r}
+# print ts object
+
+```
+
+```{r}
+# plot ts object
+
+```
+
+Objek `birth_ts` memiliki pola/komponen-komponen yang dapat kita analisis.
+
+## Komponen Time Series {.tabset}
+
+### Practical Approach
+
+Komponen time series didapatkan dari hasil **dekomposisi** data menjadi:
+
+- **Trend**: pola data secera general, cenderung naik atau cenderung turun.
+- **Seasonal**: pola yang berulang pada periode waktu yang tetap/sama.
+- **Residual/Error/Random**: komponen tidak beraturan yang tidak tertangkap oleh trend maupun seasonal.
+
+Sebelum melakukan membuat model, kita perlu melakukan **EDA** dari objek time series dengan melihat hasil dekomposisi data (menguraikan ketiga komponen objek ts: trend, seasonal, error).
+
+Dua tipe pola data time series (menentukan cara dekomposisi):
+
+* **Additive**: 
+  + $X_t = T_t + S_t + E_t$
+  + Pola trend dan seasonal nya cenderung konstan.
+* **Multiplicative**: 
+  + $X_t = T_t * S_t * E_t$
+  + Pola trend dan seasonal nya cenderung meningkat.
+
+Cara dekomposisi objek ts:
+
+1. Cek apakah polanya additive/multiplicative dengan memplotkan data:
+
+```{r}
+birth_ts %>% 
+  autoplot()
+```
+
+Type: ...
+
+Coba plotkan data `AirPassangers` (sudah berupa objek ts) yang sudah tersimpan dalam R:
+
+```{r}
+
+```
+
+Type: ...
+
+2. Dekomposisi objek ts:
+
+```{r}
+# decompose `birth_ts`
+birth_dc <- decompose(birth_ts, type = "additive")
+
+# plot decompose
+autoplot(birth_dc)
+```
+
+**Dive Deeper!** 
+
+Lakukan decompose untuk data `AirPassangers`:
+
+```{r}
+# decompose `AirPassangers`
+air_dc <- ...
+
+# plot decompose
+
+```
+
+Umumnya dari `autoplot()` saja, kita bisa lihat:
+
+* tipe pola additive/multiplicative
+* seasonal ada/tidak (ada pola berulang/tidak)
+* setiap data pasti ada error
+
+kemudian dilengkapi dengan hasil `decompose()`:
+
+* trend ada (naik/turun) atau tidak (garis horizontal)
+* bila trend fluktuatif:
+  + indikasi frequency belum tepat (ada pola seasonal yang belum tertangkap)
+  + ada multiseasonality (seasonal lebih dari 1, misal harian & mingguan)
+* kita juga bisa melakukan **seasonality analysis**
+  
+> Dari decompose, Kita dapat informasi mengenai 3 komponen utama time series, Trend, Seasonal, dan Error, yang akan berguna ketika pembuatan model.
+
+### Mathematical Breakdown
+
+#### Additive
+
+Formula: $X_t = T_t + S_t + E_t$
+
+**1. Trend**
+
+trend diperoleh dari hasil perhintungan `center moving average (CMA)`. Tujuan utamanya untuk **smoothing data** sehingga diperoleh trend yang cenderung naik/ cenderung turun.
+
+```{r}
+# data original
+autoplot(birth_ts) + theme_minimal()
+```
+
+```{r}
+# hasil informasi trend dari fungsi `decompose`
+birth_dc$trend %>% 
+  autoplot() + 
+  theme_minimal()
+```
+
+**Pendekatan manual menggunakan Center Moving Average**
+
+```{r}
+birth_trend <- ma(birth_ts, order = 12, centre = T)
+ 
+birth_trend %>% autoplot() + theme_minimal()
+```
+
+**2. Seasonality** 
+
+```{r}
+# hasil pola seasonal dari proses decompose
+birth_dc$seasonal %>% 
+  autoplot() + 
+  theme_minimal()
+```
+
+**Pendekatan manual**:
+
+Formula Additive: `Data = Trend + Seasonal + Error`
+
+Untuk mencari seasonal kita bisa buang trend terlebih dahulu. 
+
+```{r}
+# Detrend time series
+birth_seas_er <- birth_ts - birth_trend
+
+autoplot(birth_seas_er) + theme_minimal()
+```
+
+```{r}
+# mean of each month
+mean_month_birth <- birth_seas_er %>% 
+  matrix(ncol = 12, byrow = T) %>% # ubah menjadi matrix 12 kolom (bulan)
+  colMeans(na.rm = T) # hitung rata-rata per bulan
+
+# mean global
+mean_glob_birth <- mean(mean_month_birth) # adjusting seasonal
+
+# seasonality calculation
+seas_birth <- mean_month_birth - mean_glob_birth
+
+# make it repetitive just like time series data
+birth_seasonal <- ts(data = rep(seas_birth, 14), # for 14 years 
+                     start = start(birth_ts), 
+                     frequency = 12)
+
+# plot it
+birth_seasonal %>% autoplot() + theme_minimal()
+```
+
+**3. Error**
+
+Untuk memperoleh informasi error, dapat menggunakan rumus:
+
+*Error = Data - Trend - Seasonal*
+
+```{r}
+# hasil informasi error dari fungsi `decompose`
+birth_dc$random %>%
+  autoplot() + 
+  theme_minimal()
+```
+
+**Pendekatan manual**:
+
+```{r}
+birth_error <- birth_ts - birth_trend - birth_seasonal
+
+birth_error %>% autoplot() + theme_minimal()
+```
+
+**Recomposed Timeseries Additive Model**:
+
+$$X_t = T_t + S_t + E_t$$
+
+```{r}
+birth_recomp <- birth_trend + birth_seasonal + birth_error
+
+autoplot(birth_recomp) + theme_minimal()
+```
+
+#### Multiplicative
+
+Penentuan trend, seasonal dan error pada data berpola Multiplicative masih sama, namun menggunakan formula:
+
+$$X_t = T_t * S_t * E_t$$
+
+### Seasonality Analysis
+
+Seasonality analysis membantu kita mengetahui di waktu mana saja yang nilai datanya tinggi/rendah pada periode seasonal yang kita amati. 
+
+Misalnya, dari objek `birth_ts` (seasonality tahunan) kita ingin mengetahui, bulan apa saja yang tingkat kelahirannya tinggi?
+
+```{r}
+seas_data <- ny_birth %>% 
+  mutate(seasonal = birth_dc$seasonal,
+         month = month(ymd(date), label = T, abbr = T)) %>% 
+  distinct(month, seasonal)
+
+seas_data
+```
+
+```{r}
+seas_data %>% 
+  ggplot(mapping = aes(x = month, y = seasonal)) +
+  geom_col() + 
+  theme_minimal()
+```
+
+Insight: ...
+
+### Seasonality Adjustment
+
+Seasonality Adjustment adalah data time series yang sudah dibuang efek seasonal nya. Umumnya digunakan untuk lebih mudah mendeteksi error/kejadian luar biasa/anomali dari data (tidak terganggu efek seasonal). 
+
+Berikut contoh data `birth_ts` dan `AirPassanger` yang sudah dibuang efek seasonalnya:
+
+```{r}
+library(xts)
+
+# birth_ts
+as.xts(birth_dc$x - birth_dc$seasonal) %>% 
+  autoplot() %>% 
+  plotly::ggplotly()
+```
+
+**Insight**: ...
+
+```{r}
+# AirPassanger
+
+```
+
+**Insight:** ...
+

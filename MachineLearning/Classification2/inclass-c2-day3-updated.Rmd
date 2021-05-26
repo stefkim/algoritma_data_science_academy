@@ -1,0 +1,1214 @@
+---
+title: "Classification in Machine Learning II"
+author: "Newton Day"
+date: "`r Sys.Date()`"
+output:
+  html_document:
+    toc: true
+    toc_depth: 2
+    toc_float: 
+        collapsed: false
+    number_sections: false
+    theme: readable
+    highlight: haddock
+editor_options: 
+  chunk_output_type: inline
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+options(scipen = 99)
+```
+
+```{r message=FALSE, warning=FALSE}
+library(tidyverse)
+library(tm)
+```
+
+## Training Objectives:
+
+![](assets/C2.png)
+
+# Revisiting Probability
+
+Use the following example dataset; a dataset which shows the results of a poll among 1,738 adult Indonesian on the use of an online dating sites by age group.
+
+```{r message=FALSE, warning=FALSE}
+tinder <- read.csv("data_input/sample_tinder.csv")
+tinder
+```
+
+
+You must've known about 'probability' (at least at C1 Class). So how do you calculate the probability of an adult Indonesian using Tinder?
+
+<br><br>
+$$\Large P(using\ Tinder) = \frac{Number\ that\ indicated\ they\ used\ Tinder}{Total\ number\ of\ people\ in \ the \ poll}$$
+<br><br>
+
+```{r}
+head(tinder)
+
+prop.table(table(tinder$tinder))
+```
+
+> Peluang orang indonesia yang menggunakan tinder adalah 12%
+
+```{r}
+# proportion of an Indonesian adult is using Tinder
+225/(1513+225)
+```
+
+> "a probability is an expected proportion"
+
+## Independent and Dependent Event 
+
+Two events are called 'Independent' if they are not directly related event, and 'Dependent' if otherwise. Ex: The event of get 'Head' in a coin toss and the event of get 'Ace' in a draw from a set of bridge cards are (more likely) independent.
+
+1 Peluang saya naik busway dengan peluang bu ani hadir ke kelas hari ini (I)
+2 Peluang karyawan di kuningan naik taxi online dengan peluang hari hujan (D)
+3 Peluang bu felicia mengerjakan LBB dengan peluang mbak fafilia pulang kampung (I)
+
+When calculating the probability of independent events happening at the same time, we would simply use the equation of:  
+
+$$\Large P(A∩B)=P(A).P(B)$$
+
+Example:  
+- What is the probability the event of a 'Head' in coin toss and 'Ace' in a draw from a set of bridge?   
+
+```{r}
+p_head <- 1/2
+
+p_ace <- 4/52
+
+p_head*p_ace
+```
+
+
+Then, what if the probability of dependent events?
+
+## Conditional Probability
+
+The probability of dependent events is also called by **conditional probability**. In the case of our spam classifier, say 5 in 100 emails contain the word “lottery” (0.05) and 20 in 100 emails are spam (0.2), then if we mistake the two events as being independent we would obtain a wrong estimate of the joint probability. In other words, if you are asked to estimate the proportion of emails in your inbox where an email is both spam and contain the word lottery, your estimate of 0.01 is likely being too optimistic and far from the actual proportion.
+
+Because $P(lottery)$ and $P(spam)$ are dependent, calculating the joint probability require a formula that correctly describes this relationship, a formula famously known as **Bayes’ theorem**.
+
+Okay now, If I know that a person age falls in the age group 18-29, what is the probability that person is using Tinder? 
+
+Target: Seseorang pakai tinder
+Prediktor: age group 18-29
+  
+Does it change? how can you observe that in the example dataset?
+
+```{r}
+head(tinder)
+```
+
+<br><br>
+
+$$P(using\ Tinder\ |\ in\ age\ group\ 18-29) = \frac{Number\ in \ age \ group\ 18-29\ that\ indicated\ they\ used\ Tinder}{Total\ number\ in\ age\ group\ 18-29}$$
+
+```{r}
+# Find the probability of someone's using tinder when their age falls in 18-29 age group
+# Notation: P(Tinder=User | Age="18-29")
+
+
+```
+
+The pipe symbol `|’ in $P(using\ Tinder\ |\ in\ age\ group\ 18-29)$ means conditional on. This is a **conditional probability** as one can consider it the probability of using a tinder conditional on being in age group 18-29.
+
+```{r}
+tinder %>% 
+  filter(tinder == "No") %>%  # subset rows
+  select(agegroup) %>% # subset kolom
+  table() %>% 
+  prop.table()
+
+prop.table(table(tinder$agegroup))
+prop.table(table(tinder$tinder))
+```
+
+$$P(T|18-29) = \frac {P(18-29|T). P(T)}{P(18-29|T). P(T) + P(18-29|-T). P(-T)}$$
+
+```{r}
+(0.26666667*0.1294591)/((0.26666667*0.1294591)+ (0.1685393*0.8705409))
+```
+
+Kesimpulan: Peluang seseorang bermain tinder ketika diketahui umurnya 18-29 adalah 19%
+
+********
+
+**Discussion**:  
+
+- 1.$P(A|B)$ is the probability of A, given B. Does $P(A|B)$ is the same as $P(B|A)$?  
+  - *Hint*:  
+    - $P(cute|puppy)$ : If I know the thing I'm holding is puppy, what is the probability that it is cute?  
+    - $P(puppy|cute)$ : If I know the thing I'm holding is cute, what is the probability that it is the puppy?
+  
+  Answer: Berbeda
+  
+<br><br>
+- 2.What about $P(A∩B)$? If it's the probability that Events A and B both occur, does it just the same as $P(B∩A)$?  
+  
+  Answer: Sama
+
+********
+
+**Mathematical definition:**  
+
+If `A : tinder == 'User'` and `B : agegroup == 18-29`:  
+  
+$$\Large P(A∩B) = P(A|B).P(B)$$  
+  
+and  
+  
+$$\Large P(B∩A) = P(B|A).P(A)$$   
+
+we can re-write the equation as  
+
+$$\Large P(A|B).P(B) = P(B|A).P(A)$$
+  
+$$\Large P(A|B) = \frac{P(B|A). P(A)}{P(B)} = \frac{P(B|A).P(A)}{P(B|A). P(A) + P(B|!A). P(!A)}$$
+
+  
+The equation is known as **Bayes Theorem**.
+
+********
+
+## Characteristic of Naive Bayes
+
+By now, an important question we may have is how Naive Bayes treat datasets with multiple or even a large number of features with predictive attributes.  
+
+For a motivational example,let's find the probability a female adult in age group 18-29 is using Tinder.  
+
+To create a Naive Bayes model in R we can use `naiveBayes()` function from `e1071` library:  
+
+```{r}
+library(e1071)
+# Data preprocessing
+tinder <- tinder %>% 
+  mutate(tinder = as.factor(tinder),
+         agegroup = as.factor(agegroup),
+         gender = as.factor(gender))
+# create model
+model_tinder <- naiveBayes(tinder~., data = tinder)
+model_tinder
+
+# predict
+# untuk menghasilkan peluangnya
+predict(model_tinder, 
+        newdata = data.frame(agegroup = "18-29", gender = "F"), 
+        type = "raw")
+# untuk menghasilkan output kategorinya
+predict(model_tinder, 
+        newdata = data.frame(agegroup = "18-29", gender = "F"))
+```
+
+### Manual Calculation
+
+The probability of a female adult in age group 18-29 is using Tinder is around 21%. How did we get the number?  
+
+- *Target*:  
+  - A : `tinder == "User"`    
+  
+- *Predictors*:  
+  - B : `agegroup == 18-29`  
+  - C : `gender == "F"`  
+<br>
+- **The 'Naive' assumption**: considering all the predictor are mutually independent.  
+- Mengurangi beban komputasi dan mudah untuk di kalkulasi. Error nya relatif kecil jika prediktornya banyak.<br><br>  
+
+$$P(A|B∩C) = \frac{P(B|A)\ \times P(C|A)\ \times P(A)}{P(B|A)\times P(C|A)\times P(A)\ +\ P(B|!A)\times P(C|!A)\times P(!A)}$$
+
+```{r}
+(0.26666667 * 0.6711111 * 0.1294591) /((0.26666667 * 0.6711111 * 0.1294591) + (0.16853933 * 0.5829478 * 0.8705409))
+```
+
+# Case study: Party Affiliation  
+
+```{r}
+votes <- read.csv("data_input/votes.txt") 
+
+names(votes) <- c("party", 
+                  "hcapped_infants",
+                  "watercost_sharing", 
+                  "adoption_budget_reso",
+                  "physfee_freeze",
+                  "elsalvador_aid",
+                  "religious_grps",
+                  "antisatellite_ban",
+                  "nicaraguan_contras",
+                  "mxmissile",
+                  "immigration",
+                  "synfuels_cutback",
+                  "education_funding",
+                  "superfundright_sue",
+                  "crime",
+                  "dutyfree_exps",
+                  "expadmin_southafr"
+                  )
+glimpse(votes)
+```
+
+- `y`: yes/mendukung kebijakan  
+- `n`: no/tidak mendukung kebijakan  
+- `?`: netral, tidak mendukung maupun menolak kebijakan  
+
+- `party`: Party affiliation of the individual  
+- `hcapped_infants`: Handicapped Infants Protection Act (prohibits medical professionals from withholding nutrition or medical treatment from a handicapped infant)  
+- `watercost_sharing`: Water Project Cost Sharing: intended partly to stopping unnecessary projects (if beneficiaries know they must pay part of the cost)  
+- `adoption_budget_reso`: Requires the concurrent resolution on the budget to be adopted before legislation providing new budget authority  
+- `physfee_freeze`: Imposing a one-year freeze on Medicare payments for physicians, prevent doctors from charging mostly-elderly-or-disabled beneficiaries more  
+- `elsalvador_aid`: Military (arms) aid increase for El Salvador  
+- `religious_grps`: Legislation to guarantee equal access to school facilities by student religious groups  
+- `antisatellite_ban`: Preventing funds appropriated for catchall "any other act" could be used to test anti-satellite weaponry for a year  
+- `nicaraguan_contras`: US aid to the contrast in Nicaraguan countries  
+- `mxmissile`: Approval of the LGM-118 Peacekeeper, aka MX Missile Program  
+- `immigration`: Immigration Reform and Control Act  
+- `synfuels_cutback`: Funding cutback to The Synthetic Fuels Corporation (SFC)  
+- `education_funding`: As part of the Budget Reconciliation Act, by revising the education budget  
+- `superfundright_sue`: An amendment aimed at deleting a provision giving citizens the right to sue the EPA in certain cases to force action on dumps  
+- `crime`: The Comprehensive Crime Control Act of 1984  
+- `dutyfree_exps`: Granting duty-free treatment to particular items and articles (eg. water chestnuts and bamboo shoots)  
+- `expadmin_southafr`: Export Administration Act Amendments, which introduces some form of export (or loans) controls to South Africa  
+
+### EDA
+
+Investigate the data
+
+```{r}
+str(votes)
+```
+
+```{r}
+votes <- votes %>% 
+  mutate_if(is.character, as.factor)
+```
+
+Check the proportion of each party to one of the variable
+
+```{r}
+prop.table(table(votes$party))
+```
+
+Visualize each of the variable proportion in republican and/democrat
+
+```{r}
+votes %>% 
+  pivot_longer(-party, names_to = "policy", values_to = "response") %>% 
+  group_by(policy, party, response) %>% 
+  summarise(n = n()) %>% 
+  ungroup() %>% 
+  mutate(response = forcats::fct_relevel(response, c("n","?","y"))) %>% 
+  
+  ggplot(aes(policy, n))+
+  coord_flip()+
+  facet_wrap(~party)+
+  geom_col(aes(fill = response), position = "fill")+
+  geom_hline(yintercept = .5, linetype = "dashed")+
+  labs(title = "How Democrat vs. Republican Voted", x = NULL, y = NULL, fill = NULL)+
+  theme(legend.position = "top",
+        plot.title = element_text(hjust = .5))
+```
+
+
+### Cross-Validation  
+
+```{r}
+RNGkind(sample.kind = "Rounding")
+set.seed(123)
+index <- sample(nrow(votes), nrow(votes)*0.8)
+
+train <- votes[index,]
+test <- votes[-index,]
+```
+
+
+Check whether the class is balance or not?
+```{r}
+prop.table(table(train$party))
+```
+
+### Model Fitting
+
+y = party
+x = prediktor (semua kolom di data kecuali party)
+
+```{r}
+# model
+model_votes <- naiveBayes(party~., data = train)
+
+
+# predict
+pred_test <- predict(model_votes, newdata = test, type = "class")
+```
+
+Note:
+type = "class" / gak menggunakan argument type --> untuk memunculkan hasil categorical/ hasil akhirnya
+type = "raw" untuk memunculkan hasil probability dari naive bayes
+
+### Model Evaluation
+
+- Confusion Matrix:
+```{r message=FALSE, warning=FALSE}
+library(caret)
+confusionMatrix(data = pred_test, reference = test$party, positive = "republican")
+```
+
+# Naïve Bayes for Text Classification
+
+## Motivation Example
+
+Scenario:
+Let say we will doing some simple sentiment analysis. We want to predict whether comments on our webpage that using the word "Good" and "Catchy" are more likely to have a positive sentiment or a negative sentiment. Right now, you don't have that kind of information. But fortunately, you've already known about Bayes Formula, so we can conduct an experiment in order to find out what we want. 
+
+We take 500 people randomly and just give them one content in our web page (randomly) and ask about their sentiment regarding to the content. Let say 400 of them give positive sentiment. After that, you ask them to write a comment about the content. 
+
+Well, you observe that from those 400 people with positive sentiment,
+150 give comments using word "Good", 100 give comments using word "Catchy". 
+
+Also, from those 100 people with negative sentiment,
+20 of them give comments using word "Good", 15 give comments using word "Catchy".
+
+Can you calculate the probability that a comment using word "Good" & "Catchy" stands for a positive sentiment?
+
+500 sentiment
+400 pos  --- 150 "good", 100 "catchy"
+100 neg --- 20 "good", 15 "catchy"
+
+
+Target:
+Sentiment (pos/neg)
+
+Prediktor:
+- good
+- catchy
+
+$$P(P|G∩C) = \frac {P(G|P) * P(C|P)*P(P)} {P(P) * P(G|P) * P(C|P) + P(!P)*P(G|!P) * P(C|!P)}$$
+
+```{r}
+(150/400*100/400*400/500)/((150/400*100/400*400/500) + (100/500*20/100*15/100))
+```
+
+## Laplace Smoothing
+
+New Scenario:
+Consider the previous scenario example.
+
+500 sentiment
+400 pos  --- 150 "good", 100 "catchy"
+100 neg --- 0 "good", 15 "catchy"
+
+Now let's say there is no one using word "Good" as comment from all people with negative sentiment. What is the problem that may occur? What's the feasible solution then?
+
+Discussion:  
+- In text mining, smoothing is one of the essential step when applying naiveBayes classifier. (Why?)
+ 
+```{r}
+# P(Positive|Good & Catchy) if Good = 0
+(150/400*100/400*400/500)/((150/400*100/400*400/500) + (100/500*20/100*0/100))
+```
+
+
+* [Contoh pada data votes]
+```{r}
+# add laplace = 1
+model_party_laplace <- naiveBayes(party ~., data = train, laplace = 1)
+```
+
+Notes:
+
+Kalau ada prediktor yang kemunculannya 0 di salah satu kelas (skewness due to data scarcity), maka sebaiknya yang dilakukan adalah:
+
+- Hapus prediktor tsb (agak sulit karena harus cek satu2 prediktor di kemunculan masing-masing kelas)
+- Ditambahkan data agar kemunculannya naik atau tidak nol
+- Ditambahkan argumen laplace = 1 
+
+*End of Day 1*
+
+# Case Study: Spam Classifier
+
+## Data Preparation  
+
+The following example uses dataset from Tiago A. Almeida and Jose Maria Gomez Hidalgo, a collection of about 10,000 legitimate messages collected for research at the National University of Singapore (NUS). The messages largely originate from Singaporeans and mostly from students of the University.
+
+Use cases dengan data teks:
+1. Sentiment analysis
+2. Klasifikasi teks
+3. Survey tingkat kepuasan
+4. Teks generation
+5. text summarization
+
+The label of interest has two classes: “spam” for spam and “ham” for non-spam messages.
+
+```{r}
+sms <- read.csv("data_input/spam.csv", stringsAsFactors = FALSE, encoding = "UTF-8")
+```
+
+*******
+**Dive Deeper**  
+
+There are some pre-processing steps required of this dataset. Are you able to prepare the data for this exercise by:  
+1. Remove the last 3 variables as they have no valuable information  
+2. Rename the first 2 variables to “label” and “text”, in that order  
+Assign the resulting dataframe after the first two steps name of `sms`, overriding the original sms dataframe.  
+3. Is your label variable a factor? If it isn’t, convert it to a factor of 2 levels  
+4. Remember that R is case sensitive! Use `str_to_lower()` from `stringr` library to turn all characters in the dataframe to lowercase!  
+5. What is the proportion of “spam” messages in your sms dataframe?  
+
+```{r}
+library(dplyr)
+library(stringr)
+sms <- sms %>% 
+  select(label = v1, text = v2) %>% 
+  mutate(label = as.factor(label),
+         text = str_to_lower(text))
+
+prop.table(table(sms$label))
+```
+
+*******
+
+## Text Mining using `tm`  
+
+
+Klasifikasi text:
+
+- Prediktornya adalah kata-kata di text tsb
+- Dibutuhkan cleansing text/ text preparation untuk memfilter kata-kata mana saja yang cocok untuk dijadikan prediktor
+
+
+### 1. Convert text variable to corpus:
+
+Karena menggunakan *library tm*, sebelum melakukan text cleaning, data harus diubah ke dalam bentuk `corpus.`
+
+corpus = dokumen dalam bentuk list untuk data teks
+```{r}
+library(tm)
+
+# convert text to corpus
+sms.corpus <- VCorpus(VectorSource(sms$text))
+
+# check one of the texts
+sms.corpus[[10]]$content
+# check the class of sms.corpus
+class(sms.corpus)
+```
+
+### 2. Text cleaning in `tm `: Transform the content of corpus
+
+dalam penggunaan library tm, kita bisa menggunakan fungsi tm_map, untuk melakukan beberapa proses data cleaning
+
+  - Remove numbers (karena angka/numbers tidak mempengaruhi suatu text menjadi spam atau ham)
+```{r}
+sms.corpus <- tm_map(sms.corpus, FUN = removeNumbers)
+
+sms.corpus[[10]]$content
+```
+ 
+  - Remove stopwords (menghilangkan kata-kata yang umum)
+```{r}
+# stopwords("en")
+stopwords("en")
+
+stopwords_id <- read.delim("stopwords-id.txt", header = 0)
+
+sms.corpus <- tm_map(sms.corpus, FUN = removeWords, stopwords("en"))
+sms.corpus[[10]]$content
+
+tm_map(sms.corpus, FUN = removeWords, stopwords("en"))
+
+
+
+```
+
+* Optional
+
+Cara membuat stopwordlist secara manual
+```{r}
+stopwords_list <- c("a", "b", "c")
+```
+
+
+  - `Remove punctuations` (karena tanda baca bisa muncul di teks spam maupun ham)
+```{r}
+sms.corpus <- tm_map(sms.corpus, FUN = removePunctuation)
+sms.corpus[[10]]$content
+```
+
+  - `Stemming` (Mengembalikan ke kata dasar untuk kata-kata kerja tertentu yang ada "rules"-nya(-ing, -ed, -es, -ly))
+  
+- updated, update, updating, updates --- updat
+  
+* stemming = menghilangkan imbuhan
+* lemmatization = mengembalikan ke kata dasar
+  
+```{r}
+# see how stemming works
+library(SnowballC)
+
+# stem words with `stemDocument`
+
+sms.corpus <- tm_map(sms.corpus, stemDocument)
+
+sms.corpus[[10]]$content
+```
+
+* Additional (optional)
+```{r}
+str_replace_all(string = "@fafilia makan siang yuk", pattern = "@", replacement = "")
+library(textstem)
+
+lemmatize_strings(x = c("arek ngalam", "'cause updated PC"), 
+                  dictionary = kamus_malang)
+
+kamus_malang <- data.frame(kata = c("kera", "ngalam"), c("arek", "malang"))
+
+lexicon::hash_internet_slang
+```
+
+
+  - Remove white space (menghapus yang spasinya lebih dari 1)
+```{r}
+sms.corpus <- tm_map(sms.corpus, stripWhitespace)
+sms.corpus[[10]]$content
+```
+
+### 3. Tokenization in `tm`: Create DocumentTermMatrix 
+
+```{r}
+# Examine our dtm
+sms.dtm <- DocumentTermMatrix(sms.corpus)
+
+inspect(sms.dtm)
+```
+
+```{r}
+sms.corpus[[1085]]$content
+```
+
+
+## Cross-Validation
+
+### 4. Split Train- test
+
+First, let split the train-test for the predictor only.
+
+```{r}
+RNGkind(sample.kind = "Rounding")
+set.seed(123)
+idx <- sample(nrow(sms.dtm), nrow(sms.dtm)*0.75)
+
+train_sms <- sms.dtm[idx,]
+test_sms <- sms.dtm[-idx,]
+```
+
+Then, Split the `label` from **sms** dataset.
+
+```{r}
+# Store the label in 'train_label' and 'test_label'
+train_label <- sms[idx, "label"]
+test_label <- sms[-idx, "label"]
+```
+
+### 5. Choose terms which only appear in certain amount of documents
+
+From here, we will use terms that appear in at least 20 documents.
+
+```{r}
+# All terms that appear in at least 20 documents. 
+
+sms_freq <- findFreqTerms(sms.dtm, lowfreq = 20)
+
+head(sms_freq) # sms freq merupakan prediktor/kata2 yang kemunculannya min 20 di data
+length(sms_freq)
+
+# Please subset the column of train-test dataset with just using column which column names are in sms_freq.
+
+train_freq <- train_sms[, sms_freq] # subset kolom2 dari sms_freq(yg kemunculannya min 20x)
+test_freq <- test_sms[,sms_freq]
+
+inspect(train_freq)
+
+```
+## Bernoulli Conversion
+
+Note:
+- Bernoulli bertujuan untuk menghilangkan bobot dari tf (term frequency), sehingga tidak perduli kemunculan kata tsb berapa kali dalam satu dokumen, dia akan diconvert ke dalam angka 1, kalau tidak muncul akan tetap jadi 0 (0 = tidak muncul, 1 = muncul)
+-nBernoulli hanya digunakan ketika kita memodelkan menggunakan *naive bayes*. Kenapa?
+
+"naive" artinya dia mengasumsikan bahwa prediktor-prediktornya independent dan sama penting
+
+### 6. Convert to 0 or 1
+
+Before the modelling part, we need to change all elements of matrix with just 1 or 0 (1 if the corresponding term appears in the document, and 0 otherwise).
+```{r}
+bernoulli_conv <- function(x){
+  x <- as.factor(as.numeric(x > 0))
+}
+# Check your function here (using 'sapply')
+data <- c(1,2,3,9,0,0,0)
+sapply(data, bernoulli_conv)
+```
+
+```{r}
+# Margin=1 (by row), margin=2 (by column) 
+
+train_bn <- apply(train_freq, MARGIN = 2, FUN = bernoulli_conv)
+test_bn <- apply(test_freq, MARGIN = 2, FUN = bernoulli_conv)
+```
+
+## Model Fitting
+
+### 7. Model with Naive Bayes
+
+```{r}
+# Create your model here.
+model_sms <- naiveBayes(x = train_bn, y = train_label, laplace = 1)
+# predict
+pred_test <- predict(model_sms, newdata = test_bn)
+```
+
+## Model Evaluation
+
+### 8. Confusion Matrix 
+
+Create the confusion matrix here.
+```{r}
+confusionMatrix(pred_test, reference = test_label, positive = "spam")
+
+nrow(test_bn)
+length(test_label)
+```
+
+----------- END OF DAY 2 -----------------
+
+Dalam confusion matrix, threshold default = 0.5
+
+Ketika kita perkecil threshold (0.3) --> menaikkan recall
+ketika kita naikkan threshold (0.7) --> menaikkan precision
+
+```{r}
+contoh <- predict(model_sms, newdata = test_bn, type = "raw")
+
+head(contoh)
+
+# threshold default 0.5
+predict(model_sms, newdata = tail(test_bn), type = "raw")
+
+# threshold diadjust tidak 0.5
+ifelse(test = tail(contoh[,2]) > 0.3, yes = "spam", no = "ham")
+```
+
+default threshold = 0.5
+
+prob <= 0.5 ---> ham
+prob > 0.5 ----> spam
+
+adjust
+
+prob <= 0.3 ---> ham
+prob > 0.3 ----> spam
+
+
+
+
+### 9. ROC Curve/ AUC (Area Under Curve)
+
+As initial step, we need to take the probability of prediction.
+```{r}
+pred_prob <- predict(object = model_sms, newdata = test_bn, type = "raw")
+```
+
+As the requirement of ROC curve, we provide our model prediction and the actual class.
+```{r}
+library(ROCR)
+pred_rocr <- prediction(predictions = pred_prob[,2], 
+           labels = as.numeric(ifelse(test_label == "spam", 1, 0)))
+
+perf <- performance(prediction.obj = pred_rocr, measure = "tpr", x.measure = "fpr")
+```
+
+tpr (true positive rate) = recall/sensitivity
+fpr (false positive rate) = 1- specificity
+
+ROC curve is a plot of Sensitivity respect to Loss of Specificity given all possible threshold.
+```{r message=FALSE, warning=FALSE}
+library(ROCR)
+# roc plot
+plot(perf)
+# auc
+auc <- performance(pred_rocr, "auc")
+
+auc@y.values[[1]] # [[1]] untuk mengakses value dr list pertama
+```
+
+
+Summary Naive Bayes:
+
+- Hubungan antar prediktor: independent dan sama penting/kuat
+- Hubungan prediktor dan target: dependent
+- Kekurangan naive bayes: ketika ada salah satu prediktor yg kemunculannya 0 di salah satu kelas (probabilitynya jadi 0 di kelas tsb) ---> skewness due to data scarcity
+- Solusi dari kekurangannya: laplace (menambahkan angka kecil pada tiap prediktor di tiap kelas)
+- Naive Bayes lebih cocok digunakan untuk prediktor bertipe:categorical
+- Naive Bayes cocok digunakan untuk target variabel bertipe: categorical (binary/multiclass)
+
+naive bayes --> klasifikasi --> target kategorikal
+target numerik --> regresi
+
+
+tdk utk numeric (bisa --> binning) yang mana binning (mengubah data dari numerik ke kategorikal)
+
+# Decision Tree
+
+Decision tree (pohon keputusan) adalah metode klasifikasi yang **powerful**, **serbaguna** (antar prediktor dapat saling berkaitan/dependent), dan sangat **interpretable**. Decision tree bekerja dengan menyederhanakan rules/aturan dalam mengambil keputusan. 
+
+Struktur Decision Tree:   
+
+* **Root Node**: `Akar`, Cabang pertama, berupa variabel yang paling utama (pertimbangan paling awal) digunakan untuk menentukan nilai target   
+* **Internal Node**: `Cabang` kedua dan seterusnya, berupa variabel lain yang digunakan apabila cabang pertama tidak cukup untuk menentukan target    
+* **Leaf/Terminal Node**: `Daun` Nilai target atau kelas yang diprediksi    
+
+Kita akan mencoba menggunakan metode tersebut untuk melakukan `klasifikasi species` pada data `iris`.
+
+```{r}
+iris
+```
+
+```{r}
+set.seed(100)
+idx <- sample(nrow(iris), nrow(iris)*0.75)
+train_iris <- iris[idx,]
+test_iris <- iris[-idx,]
+```
+
+
+```{r}
+library(partykit)
+model_iris <- ctree(formula = Species ~., data = train_iris)
+model_iris
+```
+
+
+Visualisasi dari model
+```{r}
+plot(model_iris, type = "simple")
+```
+
+Kemudian prediksilah menggunakan `model_iris` yang sudah dibuat dengan data test
+
+```{r}
+pred_iris <- predict(model_iris, newdata = test_iris)
+head(pred_iris)
+```
+
+- type = "response" : untuk menghasilkan prediksi akhirnya (categorical)
+- type = "prob" : untuk menghasilkan probabilitynya
+
+```{r}
+confusionMatrix(pred_iris, reference = test_iris$Species)
+```
+
+
+## [Optional] Entropy dan Information Gain
+
+Decision tree melakukan penyederhanaan rules untuk menentukan keputusan (kelas).
+Penyederhaanaan dilakukan dengan memilih faktor/prediktor yang paling mampu untuk mengecilkan variasi (menghomogenkan data). 
+
+Bagaimana decision tree memilih prediktor tersebut ?
+
+**1. Entropy**  
+
+Decision tree akan menghitung entropy (derajat kekacauan) untuk target dan setiap prediktor dengan target. Entropy memiliki interval nilai antara 0 hingga log2(n), dimana n adalah banyaknya kelas target. Contoh:
+
+Jika banyaknya kelas target biner (1/0), maka nilai entropy berada pada interval 0 sampai log2(2)= 1
+
+Rumus Entropy:
+
+$$Entropy = \Sigma_{i=1}^c -p_i \ log_2 \ p_i$$
+
+Bila dipecah (entropy untuk target dengan dua kelas) menjadi:
+
+$$Entropy = -\ p_1 \ log_2 \ p_1 -p_2 \ log_2 \ p_2$$
+
+* $p_1$: proporsi kelas ke-*1* pada variabel **target**
+* $p_2$: proporsi kelas ke-*2* pada variabel **target**
+
+```{r}
+curve(-x*log2(x) - (1-x)*log2(1-x), xlab="proportion of one class", ylab="Entropy", lwd=3)
+```
+
+Kemudian ditentukan variable prediktor yang mampu memberikan penurunan entropy paling besar atau menghasilkan information gain yang paling besar.
+
+$$Information \ Gain = Entropy(parent) - (P_1 \  Entropy_1 + P_2 \  Entropy_2)$$
+di mana:    
+* $P_1$: proporsi kelas ke-*1* pada variabel **prediktor**    
+* $P_2$: proporsi kelas ke-*2* pada variabel **prediktor**    
+* $Entropy_1$: entropy untuk variabel prediktor pada kelas ke-1
+* $Entropy_2$: entropy untuk variabel prediktor pada kelas ke-2
+
+`Langkah-langkah pemodelan decision tree:`
+1. Menghitung entropy target
+2. Menghitung entropy setiap prediktor dengan target
+3. Menghitung information gain setiap prediktor
+4. Memilih prediktor yang menghasilkan information gain *terbesar*
+5. Split/bagi data berdasarkan prediktor tersebut
+6. Lakukan tahapan 2 hingga 5 untuk setiap node
+
+[link](https://www.saedsayad.com/decision_tree.htm)
+
+
+Semakin rendah nilai entrophy, maka semakin tinggi nilai information gain (krn nilai inf gain didapat dari entrophy) --> semakin homogen keputusannya --> bisa dijadikan akar (root nodenya)
+
+## Predicting Diabetes from Diagonistic Measurement
+
+Membaca data `diabetes`
+
+```{r}
+diabetes <- read.csv("data_input/diabetes.csv")
+diabetes
+```
+
+Data diabetes terdiri dari 768 observasi dan 9 variabel. Variabel-variabel tersebut, yaitu:
+
+*`pregnant`: Number of times pregnant   
+*`glucose`: Plasma glucose concentration (glucose tolerance test)   
+*`pressure`: Diastolic blood pressure (mm Hg)   
+*`triceps`: Triceps skin fold thickness (mm)   
+*`insulin`: 2-Hour serum insulin (mu U/ml)   
+*`mass`: Body mass index (weight in kg/(height in m)^2)   
+*`pedigree`: Diabetes pedigree function   
+*`age`: Age (years)   
+*`diabetes`: Test for Diabetes   
+
+Mengecek proporsi kelas target
+```{r}
+diab <- diabetes %>% 
+  mutate(diabetes = as.factor(diabetes))
+```
+
+Melakukan cross validation (90% : 10%)
+```{r}
+library(rsample)
+set.seed(100)
+idx <- initial_split(diab, prop = 0.9, strata = "diabetes")
+train <- training(idx)
+test <- testing(idx)
+```
+
+Mengecek proporsi kelas target di data train
+
+```{r}
+prop.table(table(train$diabetes))
+```
+
+Membuat model decision tree menggunakan data train
+```{r}
+model_diab <- ctree(diabetes ~., data = train)
+```
+
+Inspect model melalui visualisasi
+
+```{r}
+plot(model_diab, type = "simple")
+```
+
+Melakukan prediksi data test
+
+```{r}
+# hasil prediksi berupa kelas
+pred_class <- predict(model_diab, newdata = test, type = "response")
+head(pred_class)
+```
+
+```{r}
+# hasil prediksi berupa peluang
+pred_peluang <- predict(model_diab, newdata = test, type = "prob")
+head(pred_peluang)
+```
+
+Mengevaluasi model decision tree menggunakan confusion matrix
+```{r}
+library(caret)
+confusionMatrix(pred_class, reference = test$diabetes, positive = "pos")
+```
+
+### Overfitting vs Underfitting
+
+`Overfitting`: keadaan di mana model kita memprediksi data train jauh lebih bagus dibanding data test (model menghapal pola pada data train, dan tidak bisa men-generalisasi untuk pola data keseluruhan)
+
+`Underfitting`: keadaan di mana ketika memprediksi ke data train dan test hasilnya sama sama jelek (modelnya gagal menangkap pola pada data train maupun data test)
+
+Train = 0.75
+Test = 0.68
+
+Fit : Balance untuk memprediksi sata train dan test
+
+
+Mesin = seorang anak yang ingin UN
+
+Train = Anak belajar dari soal try out (ada jawaban/label) --- 90
+Test = Anak sedang ujian UN --- 50
+
+Overfit = mesin tidak belajar hanya menghafal (train bagus, test jelek, perbedaan > 10%) 
+Underfit = mesin sama sekali tidak belajar atau menghafal (train jelek, test jelek)
+
+Appropriate Fit = mesin belajar dari pola-pola data (pola-pola soal) yang ada (train bagus, test bagus)
+
+```{r}
+# predict ke data test
+pred_class <- predict(model_diab, newdata = test, type = "response")
+
+# predict ke data train
+pred_class_train <- predict(model_diab, newdata = train, type = "response")
+
+```
+
+```{r}
+confusionMatrix(pred_class, reference = test$diabetes, positive = "pos")
+confusionMatrix(pred_class_train, reference = train$diabetes, positive = "pos")
+```
+
+
+## Pruning and Tree-Size
+```{r}
+plot(model_diab)
+```
+
+Ketika membangun model decision tree, kita dapat menentukan seberapa kompleks rules yang dibentuk dengan melakukan pruning (membatasi pembentukan cabang pada pohon/menyederhanakan pohon yang dibentuk) untuk mencegah overfitting. Pruning dapat dilakukan dengan cara menambahkan parameter `control` pada saat melakukan pemodelan. Fungsi yang digunakan adalah `ctree_control()` dengan parameter:
+
+- `mincriterion`: Nilainya adalah 1 - P-value. Bekerja sebagai "regulator" untuk kedalaman pohon. Semakin kecil nilainya maka semakin kompleks pohon yang dihasilkan. Misal mincriterion = 0.8, maka p-value < 0.2 yang digunakan untuk melakukan split/memecah node.   
+- `minsplit`: Jumlah observasi minimal pada pada node sebelum melakukan split. Misal minsplit = 50, maka node tersebut tidak akan dipecah jika observasi yang terdapat di dalam node < 50.
+- `minbucket`: jumlah observasi minimal pada terminal/leaf node. Misal minbucket = 3, maka setiap terminal node yang terbentuk harus mempunyai minimal 3 observasi. 
+
+Membuat model decision tree menggunakan data train dan pruning
+
+```{r}
+model_tune <- ctree(diabetes ~., 
+                    data = train, 
+                    control = ctree_control(mincriterion = 0.99, 
+                                            minsplit = 50, 
+                                            minbucket = 21))
+
+plot(model_tune)
+```
+
+Melakukan prediksi data test
+```{r}
+p_test <- predict(model_tune, newdata = test)
+p_train <- predict(model_tune, newdata = train)
+```
+
+Mengevaluasi model decision tree
+```{r}
+# confusion matrix
+confusionMatrix(p_test, reference = test$diabetes, positive = "pos")
+confusionMatrix(p_train, reference = train$diabetes, positive = "pos")
+```
+
+> Berdasarkan kedua model di atas melakukan pruning yang bertujuan untuk mengatur kompleksitas model untuk mencegah overfitting masih belum bisa menangani masalah tersebut, sehingga dilakukan perbaikan terhadap model berbasis pohon dengan ensamble method.
+
+Summary Decision Tree:  
+- Kekurangan dari decision tree adalah `cenderung overfitting`
+- Kelebihannya adalah interpretable karena menghasilkan rules 
+- Decision tree mengizinkan variabel-variabel prediktornya **dependent**
+- Decision tree merupakan algoritme yang bisa melakukan klasifikasi maupun regresi
+
+
+
+# Random Forest
+
+Random forest merupakan metode klasifikasi berbasis ensamble method. Random forest dibangun dari beberapa decision tree (deafult = 500) yang berbeda karakteristiknya. Karena setiap membangun 1 tree digunakan observasi dan prdiktor yang berbeda dari hasil sampling.
+
+[link](https://towardsdatascience.com/ensemble-methods-bagging-boosting-and-stacking-c9214a10a205)
+
+## Predicting the Quality of Exercise
+
+Membaca data `fitbit`
+```{r}
+fb <- read.csv("data_input/fitbit.csv", stringsAsFactors = F)
+```
+
+Melakukan cleansing data `fitbit`
+```{r}
+fb <- fb %>% 
+  mutate(classe = as.factor(classe),
+         user_name = as.factor(user_name),
+         new_window = as.factor(new_window))
+```
+
+```{r}
+levels(fb$classe)
+```
+
+Melakukan feature Selection dengan membuang prediktor yang variansinya mendekati 0 (tidak informatif untuk memprediksi target)
+```{r}
+library(caret)
+n0_var <- nearZeroVar(fb)
+fb <- fb[,-n0_var]
+```
+
+Melakukan cross validation (75% : 25%)
+
+```{r}
+library(rsample)
+set.seed(100)
+splitted <- initial_split(data = fb, prop = 0.75, strata = "classe")
+train <- training(splitted)
+test <- testing(splitted)
+```
+
+Mengecek proporsi kelas target
+```{r}
+prop.table(table(train$classe))
+```
+
+Membuat model random forest menggunakan data train dengan menerapkan k-fold cross validation
+
+```{r}
+library(animation)
+ani.options(interval = 1, nmax = 15)
+cv.ani(main = "Demonstration of the k-fold Cross Validation", 
+  bty = "l")
+```
+
+
+```{r}
+set.seed(417)
+ctrl <- trainControl(method = "repeatedcv", number = 5, repeats = 3)
+```
+repeatedcv = krn pake k-fold
+number = banyaknya fold/lipatan
+repeats = berapa kali k-fold diulang/dilakukan
+
+```{r}
+# DON'T RUN THIS CODE
+#fb_forest <- train(classe ~., data = train, method = "rf", trControl= ctrl)
+```
+
+Membaca model yang sudah di running dan di simpan
+```{r}
+fb_forest <- readRDS("fb_forest.RDS")
+```
+
+Inspect model random forest
+```{r}
+# print output 
+
+
+# model final yang digunakan (karena menggunakan k-fold cross validation)
+
+
+# visualize model
+
+
+# prediktor yang dianggap penting (paling informatif untuk memprediksi target)
+
+```
+
+mtry = jumlah prediktor/ nodes pada pohon
+
+
+## Out of Bag (OOB) Error Rate
+
+Nilai OOB menunjukan nilai error pada data yang belum dilihat model
+
+```{r}
+plot(fb_forest$finalModel)
+legend("topright", colnames(fb_forest$finalModel$err.rate),
+       col=1:6,cex=0.8,fill=1:6)
+```
+
+*OOB = Nilai error OOB   
+*1 = Class A   
+*2 = Class B   
+*3 = Class C   
+*4 = Class D   
+*5 = Class E
+
+
+Melakukan prediksi data test
+```{r}
+
+```
+
+Mengevaluasi model random forest
+```{r}
+
+```
+
+
+# Solution to Imbalance Target Variabel
+
+```{r}
+head(sms)
+```
+
+```{r}
+set.seed(100)
+splitted <- initial_split(data = sms, prop = 0.75, strata = "label")
+train <- training(splitted)
+test <- testing(splitted)
+```
+
+```{r}
+prop.table(table(train$label))
+```
+
+Train awal = 4180 : 3619 ham, 561 spam
+
+
+## Upsample
+
+```{r}
+library(caret)
+train_up <- upSample(x = train[, -1], y = train$label, yname = "label")
+train_up
+table(train_up$label)
+```
+
+Upsample : 7238rows = 3619ham, 3619spam 
+
+## Downsample
+
+```{r}
+train_down <- downSample(x = train[, -1], y = train$label, 
+                         yname = "label")
+
+table(train_down$label)
+```
+downsample: 1122 = 561 ham, 561spam
+
+
+Summary Random Forest:
+
+1. Cenderung tidak overfitting
+2. (-) Dari segi komputasi berat karena melakukan k-fold dan membuat banyak pohon
+3. Umumnya digunakan untuk data yang besar dan variabel yang banyak
+4. Random forest bisa digunakan untuk klasifikasi maupun regresi
+
+Naive Bayes
++ perhitungan simple dan komputasi ringan
++ cocok untuk prediktor2 yang bertipe kategorikal/factor
++ cocok untuk teks klasifikasi
+- skewness due data scarcity: cara mengatasinya dengan laplace
+- mengasumsikan variabel2 prediktornya independent, kurang cocok untuk data dengan variabel2 prediktor yang independent
+
+Decision Tree
++ Mengizinkan variabel2 prediktornya dependent
++ interpretable
++ menghasilkan rules
+- cenderung overfitting
+- kalau ada outlier, tidak robust
+
+Random Forest
++ robust terhadap outlier
++ cenderung balance fit, model performance bagus
++ cocok untuk data dengan variabel prediktor banyak
+- komputasi berat, karena model cukup kompleks
+
+
+
+
+
+
